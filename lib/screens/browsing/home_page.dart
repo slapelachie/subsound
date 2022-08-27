@@ -103,6 +103,7 @@ class HomePage extends StatelessWidget {
 
 class _StarredPageStateful extends StatefulWidget {
   final _HomePageViewModel model;
+
   _StarredPageStateful({Key? key, required this.model}) : super(key: key);
 
   @override
@@ -246,6 +247,7 @@ class StarredListView extends StatelessWidget {
 class HomePageTitle extends StatelessWidget {
   final String text;
   final double? bottomPadding;
+
   const HomePageTitle(this.text, {Key? key, this.bottomPadding})
       : super(key: key);
 
@@ -317,7 +319,8 @@ class AlbumsScrollView extends StatelessWidget {
                             child: Column(
                               children: [
                                 ClipRRect(
-                                  borderRadius: BorderRadius.circular(albumHeight/10),
+                                  borderRadius:
+                                      BorderRadius.circular(albumHeight / 10),
                                   child: CoverArtImage(
                                     a.coverArtLink,
                                     id: a.coverArtId,

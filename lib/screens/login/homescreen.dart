@@ -1,16 +1,55 @@
-import 'package:async_redux/async_redux.dart';
 import 'package:flutter/material.dart';
 import 'package:subsound/screens/browsing/home_page.dart';
-import 'package:subsound/screens/browsing/starred_page.dart';
 import 'package:subsound/screens/login/albums_page.dart';
-import 'package:subsound/screens/login/artists_page.dart';
-import 'package:subsound/state/appstate.dart';
 
-import 'myscaffold.dart';
+class HomeScreen extends StatefulWidget {
+  HomeScreen({Key? key}) : super(key: key);
 
-class HomeScreen extends StatelessWidget {
-  static final routeName = "/home";
+  @override
+  State<HomeScreen> createState() => HomeScreenState();
+}
 
+class HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
+
+  final screens = [
+    HomePage(),
+    AlbumsPage(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      backgroundColor: Theme.of(context).colorScheme.background,
+      body: screens[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        backgroundColor: Theme.of(context).colorScheme.background,
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.music_note),
+            label: 'Music',
+          )
+        ],
+      ),
+    );
+  }
+}
+
+/*class HomeScreen extends StatelessWidget {
   final int initialTabIndex;
 
   const HomeScreen({
@@ -29,6 +68,7 @@ class HomeScreen extends StatelessWidget {
           appBar: AppBarSettings(
             title: Text("Home"),
             bottom: TabBar(
+              indicatorColor: Theme.of(context).primaryColor,
               onTap: (idx) {},
               tabs: [
                 Tab(
@@ -57,3 +97,4 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+*/

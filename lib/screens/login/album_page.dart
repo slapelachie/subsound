@@ -8,8 +8,7 @@ import 'package:subsound/state/appstate.dart';
 import 'package:subsound/state/playerstate.dart';
 import 'package:subsound/subsonic/context.dart';
 import 'package:subsound/subsonic/requests/get_album.dart';
-
-import 'myscaffold.dart';
+import 'package:subsound/theme/text_styles.dart';
 
 class _AlbumViewModelFactory extends VmFactory<AppState, AlbumScreen> {
   _AlbumViewModelFactory(AlbumScreen widget) : super(widget);
@@ -63,19 +62,20 @@ class AlbumScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return StoreConnector<AppState, AlbumViewModel>(
       vm: () => _AlbumViewModelFactory(this),
-      builder: (context, state) => MyScaffold(
-        appBar: AppBarSettings(disableAppBar: true),
-        body: (context) => Center(
-          child: AlbumPage(
-            ctx: state.serverData.toClient(),
-            currentSongId: state.currentSongId,
-            albumId: albumId,
-            loadAlbum: state.loadAlbum,
-            onPlay: state.onPlay,
-            onEnqueue: state.onEnqueue,
+      builder: (context, state) {
+        return Material(
+          child: Center(
+            child: AlbumPage(
+              ctx: state.serverData.toClient(),
+              currentSongId: state.currentSongId,
+              albumId: albumId,
+              loadAlbum: state.loadAlbum,
+              onPlay: state.onPlay,
+              onEnqueue: state.onEnqueue,
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -104,6 +104,19 @@ class AlbumPage extends StatefulWidget {
   }
 }
 
+String stringDuration(Duration duration) {
+  String newDuration = "";
+  String twoDigits(int n) => n.toString().padLeft(2, "0");
+  String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+  String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+
+  if (duration.inHours >= 1) {
+    newDuration = "${twoDigits(duration.inHours)}:";
+  }
+
+  return newDuration + "$twoDigitMinutes:$twoDigitSeconds";
+}
+
 class SongRow extends StatelessWidget {
   final SongResult song;
   final bool isPlaying;
@@ -121,73 +134,92 @@ class SongRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var theme = Theme.of(context);
-    return Slidable(
-      key: Key(song.id),
-      groupTag: '0',
-      startActionPane: ActionPane(
-        motion: const DrawerMotion(),
-        extentRatio: 1.0,
-        dismissible: DismissiblePane(
-          closeOnCancel: true,
-          onDismissed: () {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text('Added to queue')));
-            onEnqueue(song);
-            Slidable.of(context)?.close();
-          },
-          confirmDismiss: () async {
-            return true;
-          },
-        ),
-        children: [
-          SlidableAction(
-            label: 'Enqueue',
-            backgroundColor: Colors.green,
-            icon: Icons.playlist_add,
-            onPressed: (context) {
+    return Container(
+      padding: EdgeInsets.only(left: 10),
+      child: Slidable(
+        key: Key(song.id),
+        groupTag: '0',
+        startActionPane: ActionPane(
+          motion: const DrawerMotion(),
+          extentRatio: 1.0,
+          dismissible: DismissiblePane(
+            closeOnCancel: true,
+            onDismissed: () {
               ScaffoldMessenger.of(context)
-                  .showSnackBar(SnackBar(content: Text("Added to queue")));
+                  .showSnackBar(SnackBar(content: Text('Added to queue')));
               onEnqueue(song);
               Slidable.of(context)?.close();
             },
+            confirmDismiss: () async {
+              return true;
+            },
           ),
-        ],
-      ),
-      direction: Axis.horizontal,
-      child: ListTile(
-        onTap: () {
-          onPlay(song);
-          Slidable.of(context)?.close();
-        },
-        leading: Column(
-          //mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              "${song.trackNumber}",
-              style: TextStyle(
-                  // color: isPlaying
-                  //     ? theme.accentColor
-                  //     : theme.colorScheme.onPrimary.withOpacity(0.7),
-                  ),
+            SlidableAction(
+              label: 'Enqueue',
+              backgroundColor: Colors.green,
+              icon: Icons.playlist_add,
+              onPressed: (context) {
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text("Added to queue")));
+                onEnqueue(song);
+                Slidable.of(context)?.close();
+              },
             ),
           ],
         ),
-        dense: true,
-        minLeadingWidth: 15,
-        title: Text(
-          song.title,
-          style: TextStyle(
-            color: isPlaying
-                ? theme.colorScheme.secondary
-                : theme.colorScheme.onPrimary,
-            fontWeight: FontWeight.bold,
+        direction: Axis.horizontal,
+        child: ListTile(
+          onTap: () {
+            onPlay(song);
+            Slidable.of(context)?.close();
+          },
+          leading: Column(
+            //mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "${song.trackNumber}",
+                style: TextStyle(
+                    // color: isPlaying
+                    //     ? theme.accentColor
+                    //     : theme.colorScheme.onPrimary.withOpacity(0.7),
+                    ),
+              ),
+            ],
           ),
-          textAlign: TextAlign.left,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+          dense: true,
+          minLeadingWidth: 15,
+          title: Text(
+            song.title,
+            style: TextStyle(
+              color: isPlaying
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.left,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(stringDuration(song.duration)),
+              PopupMenuButton(
+                itemBuilder: (context) {
+                  return [
+                    PopupMenuItem(
+                      child: Text("Add to queue"),
+                      onTap: onEnqueue(song),
+                    )
+                  ];
+                },
+              )
+            ],
+          ),
+          subtitle: Text(song.artistName),
         ),
-        subtitle: Text(song.artistName),
       ),
     );
   }
@@ -213,17 +245,6 @@ class AlbumView extends StatelessWidget {
 
     return SlidableAutoCloseBehavior(
       child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomCenter,
-            stops: [0.0, 0.8],
-            colors: [
-              Colors.blueGrey.withOpacity(0.7),
-              Colors.black.withOpacity(0.7),
-            ],
-          ),
-        ),
         child: CustomScrollView(
           primary: true,
           physics: const BouncingScrollPhysics(
@@ -231,7 +252,7 @@ class AlbumView extends StatelessWidget {
           ),
           slivers: <Widget>[
             SliverAppBar(
-              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+              backgroundColor: Theme.of(context).colorScheme.background,
               stretch: false,
               centerTitle: false,
               snap: true,
@@ -248,28 +269,27 @@ class AlbumView extends StatelessWidget {
               ),
             ),
             SliverToBoxAdapter(
-             child: Container(
-               padding: EdgeInsets.only(top: 30, left: 30, right: 30),
-               alignment: Alignment.center,
-               child: ClipRRect(
-                 borderRadius: BorderRadius.circular(expandedHeight / 15),
-                 child: FittedBox(
-                   fit: BoxFit.fitWidth,
-                   alignment: Alignment.center,
-                   child: CoverArtImage(
-                     album.coverArtLink,
-                     id: album.coverArtId,
-                     width: expandedHeight,
-                     height: expandedHeight,
-                     fit: BoxFit.cover,
-                   ),
-                 ),
-               ),
-             )
-            ),
+                child: Container(
+              padding: EdgeInsets.only(top: 20, left: 20, right: 20),
+              alignment: Alignment.center,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(expandedHeight / 50),
+                child: FittedBox(
+                  fit: BoxFit.fitWidth,
+                  alignment: Alignment.center,
+                  child: CoverArtImage(
+                    album.coverArtLink,
+                    id: album.coverArtId,
+                    width: expandedHeight,
+                    height: expandedHeight,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            )),
             SliverToBoxAdapter(
               child: Container(
-                padding: EdgeInsets.only(top: 10, right: 30, left: 30),
+                padding: EdgeInsets.all(20.0),
                 alignment: Alignment.center,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -292,21 +312,51 @@ class AlbumView extends StatelessWidget {
                           ),
                         );
                       },
-                      child: Text(
-                        album.artistName,
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      child: Row(
+                        children: [
+                          Text(
+                            album.artistName,
+                            style: albumInfoStyle.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.8),
+                            ),
+                          ),
+                          VerticalDivider(),
+                          Text(
+                            "${album.year}",
+                            style: albumInfoStyle.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.8),
+                            ),
+                          ),
+                          VerticalDivider(),
+                          Text(
+                            stringDuration(album.duration),
+                            style: albumInfoStyle.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.8),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Text(
-                      "${album.year}",
-                      style: TextStyle(
-                          fontWeight: FontWeight.normal,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onPrimary
-                              .withOpacity(0.7)),
-                    ),
                   ],
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Container(
+                padding:
+                    EdgeInsets.only(top: 10, left: 20, right: 20, bottom: 10),
+                child: Text(
+                  "Songs",
+                  style: Theme.of(context).textTheme.headlineSmall,
                 ),
               ),
             ),
@@ -351,7 +401,7 @@ class AlbumPageState extends State<AlbumPage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      // color: Colors.black54,
+      color: Theme.of(context).colorScheme.background,
       child: FutureBuilder<AlbumResult>(
           future: future,
           builder: (context, snapshot) {

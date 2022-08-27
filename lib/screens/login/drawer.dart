@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:subsound/screens/login/homescreen.dart';
 import 'package:subsound/screens/login/loginscreen.dart';
+import 'package:subsound/screens/login/settings_page.dart';
 
 class MyDrawer extends StatelessWidget {
   @override
@@ -9,9 +10,6 @@ class MyDrawer extends StatelessWidget {
       child: Column(
         children: <Widget>[
           DrawerHeader(
-            decoration: BoxDecoration(
-                //color: Colors.blue,
-                ),
             child: Text(
               'Subsound',
               style: TextStyle(
@@ -21,41 +19,17 @@ class MyDrawer extends StatelessWidget {
             ),
           ),
           ListTile(
-            leading: Icon(Icons.star),
-            title: Text("Starred"),
+            leading: Icon(Icons.home),
+            title: Text("Home"),
             onTap: () {
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => HomeScreen(
-                        initialTabIndex: 0,
-                      )));
+              Navigator.pop(context);
             },
           ),
-          ListTile(
-            leading: Icon(Icons.music_note),
-            title: Text("Artists"),
-            onTap: () {
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => HomeScreen(
-                        initialTabIndex: 1,
-                      )));
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.album),
-            title: Text("Albums"),
-            onTap: () {
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => HomeScreen(
-                        initialTabIndex: 2,
-                      )));
-            },
-          ),
-          Divider(),
           ListTile(
             leading: Icon(Icons.settings),
             title: Text("Settings"),
             onTap: () {
-              Navigator.of(context).pushNamed(LoginScreen.routeName);
+              Navigator.pop(context);
             },
           ),
         ],

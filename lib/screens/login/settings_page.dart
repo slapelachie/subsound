@@ -19,6 +19,24 @@ import 'package:subsound/utils/utils.dart';
 class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    return Material(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 20),
+          ServerSettings(),
+          SizedBox(height: 20),
+          SettingsSect(
+            title: "Caching",
+            child: DownloadCacheStatsWidget(
+                stats: DownloadCacheManager().getStats()),
+          ),
+          SizedBox(height: 10),
+          ArtworkCacheStats(),
+        ],
+      ),
+    );
     return MyScaffold(
       appBar: AppBarSettings(
         title: const Text("Settings"),
@@ -330,8 +348,7 @@ class _ServerSetupFormState extends State<_ServerSetupForm> {
                     onPressed: _canSave
                         ? () {
                             save().then((value) {
-                              Navigator.of(context)
-                                  .pushReplacementNamed(HomeScreen.routeName);
+                              //Navigator.of(contex).pushReplacementNamed(HomeScreen.routeName);
                             });
                           }
                         : null,

@@ -48,7 +48,7 @@ final navBarItems = [
       icon: Icon(Icons.music_note),
     ),
     (context) {
-      Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
+      //Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
     },
   ),
   NavItems(
@@ -146,122 +146,6 @@ class MyScaffold extends StatelessWidget {
 
 final Color bottomColor = Colors.black26.withOpacity(1.0);
 
-class LinuxBody extends StatefulWidget {
-  final WidgetBuilder builder;
-
-  const LinuxBody({
-    Key? key,
-    required this.builder,
-  }) : super(key: key);
-
-  @override
-  _LinuxBodyState createState() => _LinuxBodyState();
-}
-
-final List<ViewSwitcherEntry> linuxTabs = [
-  ViewSwitcherEntry(
-    data: ViewSwitcherData(title: "Home", icon: Icons.home),
-    builder: (context) => HomeScreen(initialTabIndex: 0),
-    goto: (context) {
-      //Navigator.pushNamed(context, HomeScreen.routeName);
-    },
-  ),
-  ViewSwitcherEntry(
-    data: ViewSwitcherData(
-      title: "Artists",
-      icon: Icons.group,
-    ),
-    builder: (context) => ArtistsPage(),
-    goto: (context) {
-      //Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ArtistsPage()));
-    },
-  ),
-  ViewSwitcherEntry(
-    data: ViewSwitcherData(
-      title: "Albums",
-      icon: Icons.album,
-    ),
-    builder: (context) => ArtistsPage(),
-    goto: (context) {
-      //Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ArtistsPage()));
-    },
-  ),
-  ViewSwitcherEntry(
-    data: ViewSwitcherData(
-      title: "Starred",
-      icon: Icons.star_sharp,
-    ),
-    builder: (context) => StarredPage(),
-    goto: (context) {
-      //Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => StarredPage()));
-    },
-  ),
-  ViewSwitcherEntry(
-    data: ViewSwitcherData(
-      title: "Search",
-      icon: Icons.search,
-    ),
-    builder: (context) => SearchScreen(),
-    goto: (context) {
-      //Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => StarredPage()));
-    },
-  ),
-];
-
-class _LinuxBodyState extends State<LinuxBody> {
-  int index = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    var playerBar = DesktopPlayerBar();
-    var sideBar = DesktopSideBar();
-
-    return Column(
-      children: [
-        LinuxHeaderBar(
-          tabs: linuxTabs,
-          currentIndex: index,
-          onSwitchedTab: (idx) {
-            setState(() {
-              index = idx;
-            });
-          },
-        ),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(left: 16.0, right: 16.0),
-            child: AdwViewStack(
-              index: index,
-              children: [
-                Builder(builder: (context) {
-                  return HomePage();
-                }),
-                Builder(builder: (context) {
-                  return ArtistsPage();
-                }),
-                Builder(builder: (context) {
-                  return AlbumsPage();
-                }),
-                Builder(builder: (context) {
-                  return StarredPage();
-                }),
-                Builder(builder: (context) {
-                  return SearchScreen();
-                }),
-              ],
-              // children: linuxTabs
-              //     .map((e) => e.builder)
-              //     .map((e) => Builder(builder: e))
-              //     .toList(growable: false),
-            ),
-          ),
-        ),
-        playerBar,
-      ],
-    );
-  }
-}
-
 class MainBody extends StatelessWidget {
   final AppBarSettings appBar;
   final bool disableBottomBar;
@@ -284,10 +168,6 @@ class MainBody extends StatelessWidget {
     final double _panelMinSize =
         disableBottomBar ? footerHeight : playerBottomBarSize + footerHeight;
     final double _panelMaxSize = MediaQuery.of(context).size.height;
-
-    if (!kIsWeb && Platform.isLinux) {
-      return LinuxBody(builder: builder);
-    }
 
     return WeSlide(
       controller: _controller,
@@ -320,7 +200,7 @@ class MainBody extends StatelessWidget {
           ? SizedBox()
           : Container(
               child: PlayerView(
-                backgroundColor: Theme.of(context).primaryColor,
+                backgroundColor: Theme.of(context).backgroundColor,
                 header: Text(
                   "Now Playing",
                   textAlign: TextAlign.center,
@@ -333,7 +213,7 @@ class MainBody extends StatelessWidget {
           : Container(
               child: PlayerBottomBar(
                 height: playerBottomBarSize,
-                backgroundColor: Theme.of(context).primaryColor,
+                backgroundColor: Theme.of(context).backgroundColor,
                 onTap: () {
                   _controller.show();
                 },
@@ -342,7 +222,7 @@ class MainBody extends StatelessWidget {
       footerHeight: footerHeight,
       footer: BottomNavigationBarWidget(
         navItems: navBarItems,
-        backgroundColor: Theme.of(context).primaryColor,
+        backgroundColor: Theme.of(context).backgroundColor,
       ),
     );
   }
@@ -379,146 +259,6 @@ class _AppScaffold extends StatelessWidget {
         drawer: Navigator.of(context).canPop() ? null : MyDrawer(),
       );
     }
-  }
-}
-
-class TestAppBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      elevation: 0,
-      title: Text("This is a title"),
-      // bottom: TabBar(
-      //   tabs: [
-      //     Tab(
-      //       text: "Tab1",
-      //     ),
-      //     Tab(
-      //       text: "Tab2",
-      //     ),
-      //     Tab(
-      //       text: "Tab3",
-      //     ),
-      //   ],
-      // ),
-    );
-  }
-}
-
-class TestApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final double _panelMinSize = 150.0;
-    final double _panelMaxSize = MediaQuery.of(context).size.height;
-
-    return Scaffold(
-      // appBar: AppBar(
-      //   title: Text("This is a title"),
-      //   bottom: TabBar(
-      //     tabs: [
-      //       Tab(
-      //         text: "Tab1",
-      //       ),
-      //       Tab(
-      //         text: "Tab2",
-      //       ),
-      //       Tab(
-      //         text: "Tab3",
-      //       ),
-      //     ],
-      //   ),
-      // ),
-      backgroundColor: Colors.black,
-      body: WeSlide(
-        panelMinSize: _panelMinSize,
-        panelMaxSize: _panelMaxSize,
-        footerHeight: 60.0,
-        body: Stack(
-          children: <Widget>[
-            Container(
-              color: Colors.red,
-              child: Center(child: Text("This is the body 💪")),
-            ),
-            Positioned(
-              top: 0.0,
-              left: 0.0,
-              right: 0.0,
-              child: TestAppBar(),
-            ),
-          ],
-        ),
-        panel: Container(
-          color: Colors.blue,
-          child: Center(child: Text("This is the panel 😊")),
-        ),
-        panelHeader: Container(
-          height: _panelMinSize,
-          color: Colors.green,
-          child: Center(child: Text("Slide to Up ☝️")),
-        ),
-        footer: Container(
-          height: 60.0,
-          color: Colors.amber,
-        ),
-      ),
-    );
-  }
-}
-
-class TestApp2 extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final double _panelMinSize = 150.0;
-    final double _panelMaxSize = MediaQuery.of(context).size.height;
-
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: WeSlide(
-        panelMinSize: _panelMinSize,
-        panelMaxSize: _panelMaxSize,
-        footerHeight: 60.0,
-        body: CustomScrollView(
-          slivers: <Widget>[
-            SliverAppBar(
-              title: Text("Title"),
-              bottom: TabBar(
-                tabs: [
-                  Tab(
-                    text: "Tab1",
-                  ),
-                  Tab(
-                    text: "Tab2",
-                  ),
-                  Tab(
-                    text: "Tab3",
-                  ),
-                ],
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Container(
-                color: Colors.red,
-                height: 5000,
-                child: Text("body"),
-              ),
-            ),
-          ],
-        ),
-        panel: Container(
-          color: Colors.blue,
-          child: Center(child: Text("This is the panel 😊")),
-        ),
-        panelHeader: Container(
-          height: _panelMinSize,
-          color: Colors.green,
-          child: Center(child: Text("Slide to Up ☝️")),
-        ),
-        footer: Container(
-          height: 60.0,
-          color: Colors.amber,
-        ),
-      ),
-    );
   }
 }
 
