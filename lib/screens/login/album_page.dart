@@ -209,8 +209,7 @@ class AlbumView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // var expandedHeight = MediaQuery.of(context).size.height / 3;
-    var expandedHeight = 350.0;
+    var expandedHeight = MediaQuery.of(context).size.width * .9;
 
     return SlidableAutoCloseBehavior(
       child: Container(
@@ -232,73 +231,58 @@ class AlbumView extends StatelessWidget {
           ),
           slivers: <Widget>[
             SliverAppBar(
-              backgroundColor: Colors.black54,
-              // foregroundColor: Colors.black54,
-              // shadowColor: Colors.black54,
-              expandedHeight: expandedHeight,
-              stretch: true,
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+              stretch: false,
               centerTitle: false,
-              snap: false,
-              floating: false,
+              snap: true,
+              floating: true,
               pinned: true,
               primary: true,
               flexibleSpace: FlexibleSpaceBar(
                 centerTitle: false,
-                //titlePadding: EdgeInsets.only(left: 5.0, bottom: 10.0),
-                title: Text(
-                  album.name,
-                  //textAlign: TextAlign.start,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14.0,
-                  ),
-                  //overflow: TextOverflow.ellipsis,
-                  //maxLines: 1,
-                ),
                 collapseMode: CollapseMode.parallax,
-                background: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    ConstrainedBox(
-                      constraints: BoxConstraints.tightFor(width: 450.0),
-                      child: CoverArtImage(
-                        album.coverArtLink,
-                        id: album.coverArtId,
-                        height: expandedHeight * 1.6,
-                        width: expandedHeight * 1.6,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          // end: Alignment(0.0, 0.0),
-                          begin: Alignment.bottomCenter,
-                          end: Alignment(0.0, 0.0),
-                          colors: <Color>[
-                            Color(0x60000000),
-                            Color(0x00000000),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
                 stretchModes: [
                   StretchMode.fadeTitle,
                   StretchMode.zoomBackground,
-                  //StretchMode.blurBackground,
                 ],
               ),
             ),
             SliverToBoxAdapter(
+             child: Container(
+               padding: EdgeInsets.only(top: 30, left: 30, right: 30),
+               alignment: Alignment.center,
+               child: ClipRRect(
+                 borderRadius: BorderRadius.circular(expandedHeight / 15),
+                 child: FittedBox(
+                   fit: BoxFit.fitWidth,
+                   alignment: Alignment.center,
+                   child: CoverArtImage(
+                     album.coverArtLink,
+                     id: album.coverArtId,
+                     width: expandedHeight,
+                     height: expandedHeight,
+                     fit: BoxFit.cover,
+                   ),
+                 ),
+               ),
+             )
+            ),
+            SliverToBoxAdapter(
               child: Container(
-                height: 60,
-                padding: EdgeInsets.only(left: 20, top: 10),
+                padding: EdgeInsets.only(top: 10, right: 30, left: 30),
+                alignment: Alignment.center,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text(
+                      album.name,
+                      //textAlign: TextAlign.start,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 36.0,
+                      ),
+                    ),
                     GestureDetector(
                       onTap: () {
                         Navigator.of(context).push(

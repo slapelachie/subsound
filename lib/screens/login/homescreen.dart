@@ -23,7 +23,7 @@ class HomeScreen extends StatelessWidget {
     return StoreConnector<AppState, ServerData>(
       converter: (st) => st.state.loginState,
       builder: (context, state) => DefaultTabController(
-        length: 4,
+        length: 3,
         initialIndex: initialTabIndex,
         child: MyScaffold(
           appBar: AppBarSettings(
@@ -32,16 +32,13 @@ class HomeScreen extends StatelessWidget {
               onTap: (idx) {},
               tabs: [
                 Tab(
-                  text: "Starred",
-                ),
-                Tab(
-                  text: "Artists",
+                  text: "Home",
                 ),
                 Tab(
                   text: "Albums",
                 ),
                 Tab(
-                  text: "Home",
+                  text: "Artists",
                 ),
               ],
             ),
@@ -49,10 +46,9 @@ class HomeScreen extends StatelessWidget {
           body: (context) => Center(
             child: TabBarView(
               children: [
-                Center(child: StarredPage()),
-                Center(child: ArtistsPage()),
-                Center(child: AlbumsPage()),
                 Center(child: HomePage()),
+                Center(child: AlbumsPage()),
+                Center(child: ArtistsPage()),
               ],
             ),
           ),

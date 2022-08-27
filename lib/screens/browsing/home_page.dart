@@ -205,7 +205,7 @@ class StarredListView extends StatelessWidget {
       itemBuilder: (context, listIndex) {
         if (listIndex == 0) {
           return AlbumsScrollView(
-            title: "Recently played",
+            title: "Recent albums",
             data: data.recentAlbums,
           );
         } else if (listIndex == 1) {
@@ -280,7 +280,7 @@ class AlbumsScrollView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    const albumHeight = 120.0;
+    const albumHeight = 150.0;
     const albumPaddingTop = 8.0;
 
     final totalCount = data.length;
@@ -316,11 +316,15 @@ class AlbumsScrollView extends StatelessWidget {
                             },
                             child: Column(
                               children: [
-                                CoverArtImage(
-                                  a.coverArtLink,
-                                  id: a.coverArtId,
-                                  height: albumHeight,
-                                  width: albumHeight,
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(albumHeight/10),
+                                  child: CoverArtImage(
+                                    a.coverArtLink,
+                                    id: a.coverArtId,
+                                    height: albumHeight,
+                                    width: albumHeight,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                                 Container(
                                   width: albumHeight,
@@ -334,16 +338,6 @@ class AlbumsScrollView extends StatelessWidget {
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: theme.textTheme.subtitle1),
-                                      SizedBox(height: homePaddingBottom / 2),
-                                      Text(
-                                        a.artist,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style:
-                                            theme.textTheme.bodyText2!.copyWith(
-                                          color: theme.textTheme.caption!.color,
-                                        ),
-                                      ),
                                       SizedBox(height: homePaddingBottom / 2),
                                     ],
                                   ),
