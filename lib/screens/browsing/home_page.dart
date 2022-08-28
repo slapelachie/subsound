@@ -291,6 +291,7 @@ class AlbumsScrollView extends StatelessWidget {
                           onTap: () => showModalBottomSheet(
                             isDismissible: true,
                             isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
                             context: context,
                             builder: (context) => AlbumScreen(
                               albumId: a.id,
@@ -443,6 +444,7 @@ class StarredRow extends StatelessWidget {
             context: context,
             isDismissible: true,
             isScrollControlled: true,
+            backgroundColor: Colors.transparent,
             builder: (context) => AlbumScreen(
               albumId: album.id,
             ),
@@ -466,6 +468,7 @@ class StarredRow extends StatelessWidget {
             context: context,
             isDismissible: true,
             isScrollControlled: true,
+            backgroundColor: Colors.transparent,
             builder: (context) => AlbumScreen(
               albumId: song.albumId,
             ),

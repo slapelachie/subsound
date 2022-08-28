@@ -297,6 +297,7 @@ class AlbumsListView extends StatelessWidget {
                 isDismissible: true,
                 isScrollControlled: true,
                 context: context,
+                backgroundColor: Colors.transparent,
                 builder: (context) => AlbumScreen(
                   albumId: album.id,
                 ),
@@ -328,6 +329,7 @@ class AlbumsListView extends StatelessWidget {
                   isDismissible: true,
                   isScrollControlled: true,
                   context: context,
+                  backgroundColor: Colors.transparent,
                   builder: (context) => AlbumScreen(
                     albumId: album.id,
                   ),

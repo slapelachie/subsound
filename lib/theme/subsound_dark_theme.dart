@@ -8,6 +8,7 @@ ThemeData darkTheme = ThemeData(
   colorScheme: ColorScheme.fromSwatch(
     brightness: Brightness.dark,
     backgroundColor: Colors.black,
+    cardColor: Color(0xFF0f0f0f),
   ),
   popupMenuTheme: PopupMenuThemeData(
     color: bgColor,

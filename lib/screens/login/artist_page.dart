@@ -299,6 +299,7 @@ class _ArtistPageState extends State<_ArtistPageStateful> {
                       return showModalBottomSheet(
                         isDismissible: true,
                         isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
                         context: context,
                         builder: (context) => AlbumScreen(
                           albumId: album.id,

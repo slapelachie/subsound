@@ -64,7 +64,6 @@ class AlbumScreen extends StatelessWidget {
       vm: () => _AlbumViewModelFactory(this),
       builder: (context, state) {
         return Container(
-          height: MediaQuery.of(context).size.height * .9,
           child: Center(
             child: AlbumPage(
               ctx: state.serverData.toClient(),
@@ -244,124 +243,147 @@ class AlbumView extends StatelessWidget {
   Widget build(BuildContext context) {
     var expandedHeight = MediaQuery.of(context).size.width * .9;
 
+    Widget makeDismissible({required Widget child}) => GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => Navigator.of(context).pop(),
+          child: GestureDetector(
+            onTap: () {},
+            child: child,
+          ),
+        );
+
     return SlidableAutoCloseBehavior(
-      child: Container(
-        child: CustomScrollView(
-          primary: true,
-          slivers: <Widget>[
-            SliverToBoxAdapter(
-                child: Container(
-              padding: EdgeInsets.only(top: 20, left: 20, right: 20),
-              alignment: Alignment.center,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(expandedHeight / 50),
-                child: FittedBox(
-                  fit: BoxFit.fitWidth,
+      child: makeDismissible(
+        child: DraggableScrollableSheet(
+          maxChildSize: 1.0,
+          minChildSize: 0.7,
+          initialChildSize: 0.7,
+          builder: (context, controller) => Container(
+            padding: EdgeInsets.only(top: 20),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(15.0),
+              ),
+            ),
+            child: CustomScrollView(
+              controller: controller,
+              slivers: <Widget>[
+                SliverToBoxAdapter(
+                    child: Container(
+                  padding: EdgeInsets.only(top: 20, left: 20, right: 20),
                   alignment: Alignment.center,
-                  child: CoverArtImage(
-                    album.coverArtLink,
-                    id: album.coverArtId,
-                    width: expandedHeight,
-                    height: expandedHeight,
-                    fit: BoxFit.cover,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(expandedHeight / 50),
+                    child: FittedBox(
+                      fit: BoxFit.fitWidth,
+                      alignment: Alignment.center,
+                      child: CoverArtImage(
+                        album.coverArtLink,
+                        id: album.coverArtId,
+                        width: expandedHeight,
+                        height: expandedHeight,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                )),
+                SliverToBoxAdapter(
+                  child: Container(
+                    padding: EdgeInsets.all(20.0),
+                    alignment: Alignment.center,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          album.name,
+                          //textAlign: TextAlign.start,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 36.0,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ArtistScreen(artistId: album.artistId),
+                              ),
+                            );
+                          },
+                          child: Row(
+                            children: [
+                              Text(
+                                album.artistName,
+                                style: albumInfoStyle.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.8),
+                                ),
+                              ),
+                              VerticalDivider(),
+                              Text(
+                                "${album.year}",
+                                style: albumInfoStyle.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.8),
+                                ),
+                              ),
+                              VerticalDivider(),
+                              Text(
+                                stringDuration(album.duration),
+                                style: albumInfoStyle.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.8),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            )),
-            SliverToBoxAdapter(
-              child: Container(
-                padding: EdgeInsets.all(20.0),
-                alignment: Alignment.center,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      album.name,
-                      //textAlign: TextAlign.start,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 36.0,
-                      ),
+                SliverToBoxAdapter(
+                  child: Container(
+                    padding: EdgeInsets.only(
+                        top: 10, left: 20, right: 20, bottom: 10),
+                    child: Text(
+                      "Songs",
+                      style: Theme.of(context).textTheme.headlineSmall,
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                ArtistScreen(artistId: album.artistId),
-                          ),
-                        );
-                      },
-                      child: Row(
-                        children: [
-                          Text(
-                            album.artistName,
-                            style: albumInfoStyle.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onBackground
-                                  .withOpacity(0.8),
-                            ),
-                          ),
-                          VerticalDivider(),
-                          Text(
-                            "${album.year}",
-                            style: albumInfoStyle.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onBackground
-                                  .withOpacity(0.8),
-                            ),
-                          ),
-                          VerticalDivider(),
-                          Text(
-                            stringDuration(album.duration),
-                            style: albumInfoStyle.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onBackground
-                                  .withOpacity(0.8),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Container(
-                padding:
-                    EdgeInsets.only(top: 10, left: 20, right: 20, bottom: 10),
-                child: Text(
-                  "Songs",
-                  style: Theme.of(context).textTheme.headlineSmall,
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (BuildContext context, int index) {
+                      final song = album.songs[index];
+                      final isPlaying =
+                          currentSongId != null && currentSongId == song.id;
+                      return SongRow(
+                        isPlaying: isPlaying,
+                        song: song,
+                        onEnqueue: (song) {
+                          onEnqueue(song);
+                        },
+                        onPlay: (song) {
+                          onPlay(song.id, album);
+                        },
+                      );
+                    },
+                    childCount: album.songs.length,
+                  ),
                 ),
-              ),
+              ],
             ),
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (BuildContext context, int index) {
-                  final song = album.songs[index];
-                  final isPlaying =
-                      currentSongId != null && currentSongId == song.id;
-                  return SongRow(
-                    isPlaying: isPlaying,
-                    song: song,
-                    onEnqueue: (song) {
-                      onEnqueue(song);
-                    },
-                    onPlay: (song) {
-                      onPlay(song.id, album);
-                    },
-                  );
-                },
-                childCount: album.songs.length,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -382,25 +404,25 @@ class AlbumPageState extends State<AlbumPage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Theme.of(context).colorScheme.background,
       child: FutureBuilder<AlbumResult>(
-          future: future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              if (snapshot.hasData) {
-                return AlbumView(
-                  currentSongId: widget.currentSongId,
-                  album: snapshot.data!,
-                  onPlay: widget.onPlay,
-                  onEnqueue: widget.onEnqueue,
-                );
-              } else {
-                return Center(child: Text("${snapshot.error}"));
-              }
+        future: future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.hasData) {
+              return AlbumView(
+                currentSongId: widget.currentSongId,
+                album: snapshot.data!,
+                onPlay: widget.onPlay,
+                onEnqueue: widget.onEnqueue,
+              );
             } else {
-              return Center(child: CircularProgressIndicator());
+              return Center(child: Text("${snapshot.error}"));
             }
-          }),
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
+        },
+      ),
     );
   }
 
