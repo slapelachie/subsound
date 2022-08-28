@@ -370,126 +370,74 @@ class PlayerView extends StatelessWidget {
       child: StoreConnector<AppState, PlayerViewModel>(
         vm: () => _PlayerViewModelFactory(this),
         builder: (context, vm) => Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints.tightForFinite(width: 400),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                if (header != null) header!,
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: 100,
-                        maxHeight: MediaQuery.of(context).size.width * 0.8,
-                        minWidth: 100,
-                        maxWidth: MediaQuery.of(context).size.width * 0.8,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  if (vm.albumId.isNotEmpty) {
+                    showModalBottomSheet(
+                      context: context,
+                      isDismissible: true,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => AlbumScreen(
+                        albumId: vm.albumId,
                       ),
-                      child: SizedBox.expand(
-                        child: GestureDetector(
-                          onTap: () {
-                            if (vm.albumId.isNotEmpty) {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => AlbumScreen(
-                                    albumId: vm.albumId,
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                          child: FittedBox(
-                            child: vm.coverArtLink != null
-                                ? CoverArtImage(
-                                    vm.coverArtLink,
-                                    id: vm.coverArtId,
-                                    // height: 250,
-                                    // width: 250,
-                                    fit: BoxFit.cover,
-                                  )
-                                : Icon(Icons.album),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.8,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.67,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SongTitle(songTitle: vm.songTitle),
-                                SizedBox(height: 10.0),
-                                ArtistTitle(artistName: vm.artistTitle),
-                                SizedBox(height: 12.0),
-                              ],
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              if (vm.isStarred) {
-                                vm.onUnstar(vm.songId);
-                              } else {
-                                vm.onStar(vm.songId);
-                              }
-                            },
-                            child: Icon(
-                              vm.isStarred
-                                  ? Icons.star
-                                  : Icons.star_border_outlined,
-                              color: Theme.of(context).colorScheme.secondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        UpdatingPlayerSlider(
-                          onSeek: vm.onSeek,
-                          size: MediaQuery.of(context).size.width * 0.7,
-                          onStartListen: vm.onStartListen,
-                          onStopListen: vm.onStopListen,
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.skip_previous),
-                          iconSize: 42.0,
-                          onPressed: () {
-                            vm.onPlayPrev();
-                          },
-                        ),
-                        PlayButton(state: vm, size: 72.0),
-                        IconButton(
-                          icon: Icon(Icons.skip_next),
-                          iconSize: 42.0,
-                          onPressed: () {
-                            vm.onPlayNext();
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
+                    );
+                  }
+                },
+                child: FittedBox(
+                  child: vm.coverArtLink != null
+                      ? CoverArtImage(
+                          vm.coverArtLink,
+                          id: vm.coverArtId,
+                          width: MediaQuery.of(context).size.width * .8,
+                          height: MediaQuery.of(context).size.width * .8,
+                          fit: BoxFit.cover,
+                        )
+                      : Icon(Icons.album),
                 ),
-              ],
-            ),
+              ),
+              Column(
+                children: [
+                  Column(
+                    children: [
+                      SongTitle(songTitle: vm.songTitle),
+                      SizedBox(height: 10.0),
+                      ArtistTitle(artistName: vm.artistTitle),
+                      SizedBox(height: 12.0),
+                    ],
+                  ),
+                  UpdatingPlayerSlider(
+                    onSeek: vm.onSeek,
+                    size: MediaQuery.of(context).size.width * 0.8,
+                    onStartListen: vm.onStartListen,
+                    onStopListen: vm.onStopListen,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.skip_previous),
+                        iconSize: 42.0,
+                        onPressed: () {
+                          vm.onPlayPrev();
+                        },
+                      ),
+                      PlayButton(state: vm, size: 72.0),
+                      IconButton(
+                        icon: Icon(Icons.skip_next),
+                        iconSize: 42.0,
+                        onPressed: () {
+                          vm.onPlayNext();
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            ],
           ),
         ),
       ),
@@ -701,8 +649,8 @@ class CachedSliderState extends State<CachedSlider> {
         ),
         overlayShape: RoundSliderOverlayShape(overlayRadius: 8.0),
         overlayColor: Theme.of(context).colorScheme.secondary.withOpacity(0.4),
-        thumbColor: Theme.of(context).colorScheme.secondary,
-        activeTrackColor: Theme.of(context).colorScheme.secondary,
+        thumbColor: Theme.of(context).colorScheme.primary,
+        activeTrackColor: Theme.of(context).colorScheme.primary,
         inactiveTrackColor: Theme.of(context).brightness == Brightness.dark
             ? Colors.white.withOpacity(0.4)
             : Colors.black.withOpacity(0.2),
