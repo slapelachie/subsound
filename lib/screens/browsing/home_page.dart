@@ -195,13 +195,9 @@ class StarredListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var starred = data.starred;
-
-    final itemCount = starred.length + 4;
-
     return ListView.builder(
       physics: BouncingScrollPhysics(),
-      itemCount: itemCount,
+      itemCount: 3,
       padding: EdgeInsets.zero,
       itemBuilder: (context, listIndex) {
         if (listIndex == 0) {
@@ -214,29 +210,10 @@ class StarredListView extends StatelessWidget {
             title: "New albums",
             data: data.newAlbums,
           );
-        } else if (listIndex == 2) {
+        } else {
           return PlaylistsScrollView(
             title: "Playlists",
             data: data.playlists,
-          );
-        } else if (listIndex == 3) {
-          return HomePageTitle("Starred");
-        } else {
-          final idx = listIndex - 4;
-          return StarredRow(
-            item: starred[idx],
-            isPlaying: starred[idx].isPlaying(model.currentSongId),
-            onPlay: (item) {
-              if (item.getSong() != null) {
-                var queue = starred
-                    .where((element) => element.getSong() != null)
-                    .map((e) => e.getSong()!)
-                    .toList();
-                model.onPlaySong(item.getSong()!, queue);
-              } else if (item.getAlbum() != null) {
-                model.onPlayAlbum(item.getAlbum()!);
-              } else {}
-            },
           );
         }
       },
@@ -302,53 +279,56 @@ class AlbumsScrollView extends StatelessWidget {
               physics: BouncingScrollPhysics(),
               child: Row(
                 children: albums
-                    .map((a) => Padding(
-                          padding: const EdgeInsets.only(
-                            left: homePaddingLeft,
-                            top: albumPaddingTop,
-                            right: 8.0,
-                            bottom: homePaddingBottom,
-                          ),
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) =>
-                                    AlbumScreen(albumId: a.id),
-                              ));
-                            },
-                            child: Column(
-                              children: [
-                                ClipRRect(
-                                  borderRadius:
-                                      BorderRadius.circular(albumHeight / 10),
-                                  child: CoverArtImage(
-                                    a.coverArtLink,
-                                    id: a.coverArtId,
-                                    height: albumHeight,
-                                    width: albumHeight,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                Container(
-                                  width: albumHeight,
-                                  // color: Colors.black,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      SizedBox(height: homePaddingBottom / 2),
-                                      Text(a.title,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: theme.textTheme.subtitle1),
-                                      SizedBox(height: homePaddingBottom / 2),
-                                    ],
-                                  ),
-                                )
-                              ],
+                    .map(
+                      (a) => Padding(
+                        padding: const EdgeInsets.only(
+                          left: homePaddingLeft,
+                          top: albumPaddingTop,
+                          right: 8.0,
+                          bottom: homePaddingBottom,
+                        ),
+                        child: GestureDetector(
+                          onTap: () => showModalBottomSheet(
+                            isDismissible: true,
+                            isScrollControlled: true,
+                            context: context,
+                            builder: (context) => AlbumScreen(
+                              albumId: a.id,
                             ),
                           ),
-                        ))
+                          child: Column(
+                            children: [
+                              ClipRRect(
+                                borderRadius:
+                                    BorderRadius.circular(albumHeight / 10),
+                                child: CoverArtImage(
+                                  a.coverArtLink,
+                                  id: a.coverArtId,
+                                  height: albumHeight,
+                                  width: albumHeight,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              Container(
+                                width: albumHeight,
+                                // color: Colors.black,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(height: homePaddingBottom / 2),
+                                    Text(a.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.subtitle1),
+                                    SizedBox(height: homePaddingBottom / 2),
+                                  ],
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
                     .toList(),
               ),
             ),
@@ -459,11 +439,21 @@ class StarredRow extends StatelessWidget {
           onPlay(item);
         },
         onTapCover: (album) {
+          return showModalBottomSheet(
+            context: context,
+            isDismissible: true,
+            isScrollControlled: true,
+            builder: (context) => AlbumScreen(
+              albumId: album.id,
+            ),
+          );
+          /*
           Navigator.of(context).push(MaterialPageRoute(
             builder: (context) => AlbumScreen(
               albumId: album.id,
             ),
           ));
+          */
         },
       );
     }
@@ -472,11 +462,14 @@ class StarredRow extends StatelessWidget {
         song: item.getSong()!,
         isPlaying: isPlaying,
         onTapCover: (SongResult song) {
-          Navigator.of(context).push(MaterialPageRoute(
+          return showModalBottomSheet(
+            context: context,
+            isDismissible: true,
+            isScrollControlled: true,
             builder: (context) => AlbumScreen(
               albumId: song.albumId,
             ),
-          ));
+          );
         },
         onTapRow: (SongResult song) {
           onPlay(item);

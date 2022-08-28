@@ -155,26 +155,27 @@ class PlayerSong {
     return playItem;
   }
 
-  // static PlayerSong fromMediaItem(MediaItem item) {
-  //   var meta = item.getSongMetadata();
-  //   return PlayerSong(
-  //     id: item.id,
-  //     songTitle: item.id,
-  //     artist: item.artist ?? '',
-  //     album: item.album ?? '',
-  //     artistId: item.artist,
-  //     albumId: albumId,
-  //     coverArtId: coverArtId,
-  //     songUrl: songUrl,
-  //     contentType: contentType,
-  //     fileExtension: fileExtension,
-  //     fileSize: fileSize,
-  //     duration: duration,
-  //   );
-  // }
+// static PlayerSong fromMediaItem(MediaItem item) {
+//   var meta = item.getSongMetadata();
+//   return PlayerSong(
+//     id: item.id,
+//     songTitle: item.id,
+//     artist: item.artist ?? '',
+//     album: item.album ?? '',
+//     artistId: item.artist,
+//     albumId: albumId,
+//     coverArtId: coverArtId,
+//     songUrl: songUrl,
+//     contentType: contentType,
+//     fileExtension: fileExtension,
+//     fileSize: fileSize,
+//     duration: duration,
+//   );
+// }
 }
 
 enum PlayerStates { stopped, playing, paused, buffering }
+
 enum ShuffleMode { none, shuffle }
 
 class PlayerState {
@@ -388,8 +389,9 @@ class PlayerView extends StatelessWidget {
                             if (vm.albumId.isNotEmpty) {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      AlbumScreen(albumId: vm.albumId),
+                                  builder: (context) => AlbumScreen(
+                                    albumId: vm.albumId,
+                                  ),
                                 ),
                               );
                             }

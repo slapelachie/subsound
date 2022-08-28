@@ -7,21 +7,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:libadwaita/libadwaita.dart';
 import 'package:libadwaita_core/libadwaita_core.dart';
-import 'package:subsound/components/desktop/linux_header_bar.dart';
-import 'package:subsound/components/desktop/player_bar.dart';
-import 'package:subsound/components/desktop/side_menu.dart';
 import 'package:subsound/components/miniplayer.dart';
 import 'package:subsound/components/player.dart';
-import 'package:subsound/screens/browsing/home_page.dart';
-import 'package:subsound/screens/browsing/search.dart';
-import 'package:subsound/screens/browsing/starred_page.dart';
-import 'package:subsound/screens/login/albums_page.dart';
-import 'package:subsound/screens/login/artist_page.dart';
-import 'package:subsound/screens/login/artists_page.dart';
-import 'package:subsound/screens/login/bottomnavbar.dart';
 import 'package:subsound/screens/login/drawer.dart';
 import 'package:subsound/screens/login/loginscreen.dart';
-import 'package:subsound/screens/login/settings_page.dart';
 import 'package:subsound/state/appstate.dart';
 import 'package:we_slide/we_slide.dart';
 
@@ -40,45 +29,6 @@ class SlidingHome extends StatelessWidget {
     );
   }
 }
-
-final navBarItems = [
-  NavItems(
-    BottomNavigationBarItem(
-      label: 'Music',
-      icon: Icon(Icons.music_note),
-    ),
-    (context) {
-      //Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
-    },
-  ),
-  NavItems(
-      BottomNavigationBarItem(
-        label: 'Search',
-        icon: Icon(Icons.search),
-      ), (context) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (context) => SearchScreen(),
-    ));
-  }),
-  // NavItems(
-  //     BottomNavigationBarItem(
-  //       label: 'Search',
-  //       icon: Icon(Icons.search_sharp),
-  //     ), (context) {
-  //   Navigator.of(context).pushReplacementNamed(PlayerScreen.routeName);
-  // }),
-  NavItems(
-    BottomNavigationBarItem(
-      label: 'Settings',
-      icon: Icon(Icons.settings),
-    ),
-    (context) {
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => SettingsPage()));
-    },
-  )
-];
-final navBarItemsList = navBarItems.map((e) => e.item).toList();
 
 class AppScaffoldModel extends Vm {
   final StartUpState startUpState;
@@ -114,8 +64,6 @@ class AppBarSettings {
     this.bottom,
   });
 }
-
-const playerBottomBarSize = 50.0;
 
 class MyScaffold extends StatelessWidget {
   final AppBarSettings? appBar;
@@ -160,13 +108,14 @@ class MainBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = Theme.of(context).scaffoldBackgroundColor;
+    final _playerBottomSize = 50.0;
+    final bgColor = Theme.of(context).colorScheme.background;
     final bool disableAppBar = appBar.disableAppBar;
     final WeSlideController _controller = WeSlideController();
     final footerHeight =
         kBottomNavigationBarHeight + MediaQuery.of(context).padding.bottom;
     final double _panelMinSize =
-        disableBottomBar ? footerHeight : playerBottomBarSize + footerHeight;
+        disableBottomBar ? footerHeight : _playerBottomSize + footerHeight;
     final double _panelMaxSize = MediaQuery.of(context).size.height;
 
     return WeSlide(
@@ -212,7 +161,7 @@ class MainBody extends StatelessWidget {
           ? SizedBox()
           : Container(
               child: PlayerBottomBar(
-                height: playerBottomBarSize,
+                height: _playerBottomSize,
                 backgroundColor: Theme.of(context).backgroundColor,
                 onTap: () {
                   _controller.show();
@@ -220,10 +169,6 @@ class MainBody extends StatelessWidget {
               ),
             ),
       footerHeight: footerHeight,
-      footer: BottomNavigationBarWidget(
-        navItems: navBarItems,
-        backgroundColor: Theme.of(context).backgroundColor,
-      ),
     );
   }
 }

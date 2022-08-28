@@ -6,7 +6,6 @@ var primaryColor = Colors.cyan;
 
 ThemeData darkTheme = ThemeData(
   colorScheme: ColorScheme.fromSwatch(
-    primaryColorDark: primaryColor,
     brightness: Brightness.dark,
     backgroundColor: Colors.black,
   ),

@@ -143,7 +143,9 @@ class PlaylistPage extends StatelessWidget {
             onTapRow: onPlay,
             onTapCover: (song) {
               Navigator.of(context).push(MaterialPageRoute(
-                builder: (context) => AlbumScreen(albumId: song.albumId),
+                builder: (context) => AlbumScreen(
+                  albumId: song.albumId,
+                ),
               ));
             },
           );

@@ -63,7 +63,8 @@ class AlbumScreen extends StatelessWidget {
     return StoreConnector<AppState, AlbumViewModel>(
       vm: () => _AlbumViewModelFactory(this),
       builder: (context, state) {
-        return Material(
+        return Container(
+          height: MediaQuery.of(context).size.height * .9,
           child: Center(
             child: AlbumPage(
               ctx: state.serverData.toClient(),
@@ -247,27 +248,7 @@ class AlbumView extends StatelessWidget {
       child: Container(
         child: CustomScrollView(
           primary: true,
-          physics: const BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
-          ),
           slivers: <Widget>[
-            SliverAppBar(
-              backgroundColor: Theme.of(context).colorScheme.background,
-              stretch: false,
-              centerTitle: false,
-              snap: true,
-              floating: true,
-              pinned: true,
-              primary: true,
-              flexibleSpace: FlexibleSpaceBar(
-                centerTitle: false,
-                collapseMode: CollapseMode.parallax,
-                stretchModes: [
-                  StretchMode.fadeTitle,
-                  StretchMode.zoomBackground,
-                ],
-              ),
-            ),
             SliverToBoxAdapter(
                 child: Container(
               padding: EdgeInsets.only(top: 20, left: 20, right: 20),

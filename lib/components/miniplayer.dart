@@ -244,13 +244,13 @@ class MiniPlayerProgressBarState extends State<MiniPlayerProgressBar>
   }
 }
 
-const miniProgressBarHeight = 2.0;
-const bottomBorderSize = 1.0;
 
 class MiniPlayer extends StatelessWidget {
   final double height;
   final Color backgroundColor;
   final Function onTap;
+
+  final double _miniProgressBarHeight = 2.0;
 
   MiniPlayer({
     Key? key,
@@ -262,26 +262,19 @@ class MiniPlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     //final screenWidth = MediaQuery.of(context).size.width;
-    final playerHeight = height - miniProgressBarHeight - bottomBorderSize;
+    final playerHeight = height - _miniProgressBarHeight;
 
     return StoreConnector<AppState, MiniPlayerModel>(
       vm: () => _MiniPlayerModelFactory(this),
-      builder: (context, state) => SizedBox(
-        height: height,
+      builder: (context, state) => AnimatedContainer(
+        height: state.playerState == PlayerStates.stopped ? 0 : 50.0,
+        duration: Duration(milliseconds: 100),
         child: Container(
-          decoration: BoxDecoration(
-              // color: Colors.black12,
-              // color: Colors.pinkAccent,
-              border: Border(
-                  bottom: BorderSide(
-            //color: Colors.black,
-            width: bottomBorderSize,
-          ))),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               MiniPlayerProgressBar(
-                height: miniProgressBarHeight,
+                height: _miniProgressBarHeight,
                 onInitListen: state.onStartListen,
                 onFinishListen: state.onStopListen,
               ),

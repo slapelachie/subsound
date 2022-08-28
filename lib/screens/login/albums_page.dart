@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:async_redux/async_redux.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -212,7 +210,7 @@ class AlbumItemState extends State<AlbumItem> {
         })
       },
       child: Material(
-        elevation: _hover ? 4: 2,
+        elevation: _hover ? 4 : 2,
         //color: Theme.of(context).cardColor,
         borderRadius: border,
         child: InkWell(
@@ -295,11 +293,14 @@ class AlbumsListView extends StatelessWidget {
           return AlbumRow(
             album: albums[idx],
             onTap: (album) {
-              Navigator.of(context).push(MaterialPageRoute(
+              return showModalBottomSheet(
+                isDismissible: true,
+                isScrollControlled: true,
+                context: context,
                 builder: (context) => AlbumScreen(
                   albumId: album.id,
                 ),
-              ));
+              );
             },
           );
         },
@@ -323,11 +324,14 @@ class AlbumsListView extends StatelessWidget {
               width: itemWidth,
               album: albums[idx],
               onTap: (album) {
-                Navigator.of(context).push(MaterialPageRoute(
+                return showModalBottomSheet(
+                  isDismissible: true,
+                  isScrollControlled: true,
+                  context: context,
                   builder: (context) => AlbumScreen(
                     albumId: album.id,
                   ),
-                ));
+                );
               },
             );
           },

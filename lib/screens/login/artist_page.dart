@@ -62,6 +62,7 @@ class ArtistPage extends StatelessWidget {
 
 class ArtistPageModelFactory extends VmFactory<AppState, ArtistPage> {
   ArtistPageModelFactory(ArtistPage widget) : super(widget);
+
   @override
   ArtistPageModel fromStore() {
     return ArtistPageModel(
@@ -233,8 +234,7 @@ class ArtistView extends StatelessWidget {
             ),
           ),
           SliverList(
-            delegate: SliverChildListDelegate(artist
-                .albums
+            delegate: SliverChildListDelegate(artist.albums
                 .map((album) =>
                     AlbumRow(album: album, onSelectedAlbum: onSelectedAlbum))
                 .toList()),
@@ -296,10 +296,14 @@ class _ArtistPageState extends State<_ArtistPageStateful> {
                   return ArtistView(
                     artist: snapshot.data!,
                     onSelectedAlbum: (album) {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => AlbumScreen(
-                                albumId: album.id,
-                              )));
+                      return showModalBottomSheet(
+                        isDismissible: true,
+                        isScrollControlled: true,
+                        context: context,
+                        builder: (context) => AlbumScreen(
+                          albumId: album.id,
+                        ),
+                      );
                     },
                   );
                 } else {
