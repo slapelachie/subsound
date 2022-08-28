@@ -353,17 +353,20 @@ class PlayerViewModel extends Vm {
 class PlayerView extends StatelessWidget {
   final Widget? header;
   final Color? backgroundColor;
+  final double? height;
 
   const PlayerView({
     Key? key,
     this.header,
     this.backgroundColor,
+    this.height,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: backgroundColor,
+      height: height,
       child: StoreConnector<AppState, PlayerViewModel>(
         vm: () => _PlayerViewModelFactory(this),
         builder: (context, vm) => Center(
@@ -457,7 +460,7 @@ class PlayerView extends StatelessWidget {
                       children: [
                         UpdatingPlayerSlider(
                           onSeek: vm.onSeek,
-                          size: MediaQuery.of(context).size.width * 0.8,
+                          size: MediaQuery.of(context).size.width * 0.7,
                           onStartListen: vm.onStartListen,
                           onStopListen: vm.onStopListen,
                         ),

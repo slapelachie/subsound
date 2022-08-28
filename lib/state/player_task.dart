@@ -59,11 +59,12 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
           ProcessingState.completed: AudioProcessingState.completed,
         }[_player.processingState]!,
         playing: _player.playing,
-        updatePosition: event.updatePosition,
+        updatePosition: _player.position,
         bufferedPosition: _player.bufferedPosition,
         speed: _player.speed,
       ));
     }, onError: _handleErrors, onDone: _handleDone);
+
 
     volumeState.add(_player.volume);
     _player.volumeStream.listen((event) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:subsound/components/miniplayer.dart';
+import 'package:subsound/components/player.dart';
 import 'package:subsound/screens/browsing/home_page.dart';
 import 'package:subsound/screens/login/albums_page.dart';
 
@@ -36,7 +37,15 @@ class HomeScreenState extends State<HomeScreen> {
           MiniPlayer(
             height: 50,
             backgroundColor: Theme.of(context).colorScheme.surface,
-            onTap: () {},
+            onTap: () => showModalBottomSheet(
+              isDismissible: true,
+              isScrollControlled: true,
+              context: context,
+              builder: (context) => PlayerView(
+                height: MediaQuery.of(context).size.height * .9,
+                backgroundColor: Theme.of(context).colorScheme.surface,
+              ),
+            ),
           ),
           BottomNavigationBar(
             currentIndex: _selectedIndex,
