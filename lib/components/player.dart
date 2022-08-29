@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:subsound/components/covert_art.dart';
 import 'package:subsound/screens/login/album_page.dart';
+import 'package:subsound/screens/login/artist_page.dart';
 import 'package:subsound/screens/login/myscaffold.dart';
 import 'package:subsound/state/appcommands.dart';
 import 'package:subsound/state/appstate.dart';
@@ -269,6 +270,7 @@ class _PlayerViewModelFactory extends VmFactory<AppState, PlayerView> {
       songId: state.playerState.currentSong?.id ?? '',
       songTitle: state.playerState.currentSong?.songTitle ?? '',
       artistTitle: state.playerState.currentSong?.artist ?? '',
+      artistId: state.playerState.currentSong?.artistId ?? '',
       albumTitle: state.playerState.currentSong?.album ?? '',
       albumId: state.playerState.currentSong?.albumId ?? '',
       coverArtLink: state.playerState.currentSong?.coverArtLink ?? '',
@@ -296,6 +298,7 @@ class PlayerViewModel extends Vm {
   final String songId;
   final String songTitle;
   final String artistTitle;
+  final String artistId;
   final String albumTitle;
   final String albumId;
   final String? coverArtLink;
@@ -318,6 +321,7 @@ class PlayerViewModel extends Vm {
     required this.songId,
     required this.songTitle,
     required this.artistTitle,
+    required this.artistId,
     required this.albumTitle,
     required this.albumId,
     this.coverArtLink,
@@ -403,9 +407,39 @@ class PlayerView extends StatelessWidget {
                 children: [
                   Column(
                     children: [
-                      SongTitle(songTitle: vm.songTitle),
+                      InkWell(
+                        onTap: () => showModalBottomSheet(
+                          context: context,
+                          isDismissible: true,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => AlbumScreen(
+                            albumId: vm.albumId,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(10.0),
+                          child: SongTitle(songTitle: vm.songTitle),
+                        ),
+                      ),
                       SizedBox(height: 10.0),
-                      ArtistTitle(artistName: vm.artistTitle),
+                      InkWell(
+                        onTap: () => showModalBottomSheet(
+                          context: context,
+                          isDismissible: true,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => ArtistScreen(
+                            artistId: vm.artistId,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(10.0),
+                          child: ArtistTitle(
+                            artistName: vm.artistTitle,
+                          ),
+                        ),
+                      ),
                       SizedBox(height: 12.0),
                     ],
                   ),

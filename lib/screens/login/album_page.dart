@@ -270,24 +270,25 @@ class AlbumView extends StatelessWidget {
               controller: controller,
               slivers: <Widget>[
                 SliverToBoxAdapter(
-                    child: Container(
-                  padding: EdgeInsets.only(top: 20, left: 20, right: 20),
-                  alignment: Alignment.center,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(expandedHeight / 50),
-                    child: FittedBox(
-                      fit: BoxFit.fitWidth,
-                      alignment: Alignment.center,
-                      child: CoverArtImage(
-                        album.coverArtLink,
-                        id: album.coverArtId,
-                        width: expandedHeight,
-                        height: expandedHeight,
-                        fit: BoxFit.cover,
+                  child: Container(
+                    padding: EdgeInsets.only(top: 20, left: 20, right: 20),
+                    alignment: Alignment.center,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(expandedHeight / 50),
+                      child: FittedBox(
+                        fit: BoxFit.fitWidth,
+                        alignment: Alignment.center,
+                        child: CoverArtImage(
+                          album.coverArtLink,
+                          id: album.coverArtId,
+                          width: expandedHeight,
+                          height: expandedHeight,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),
-                )),
+                ),
                 SliverToBoxAdapter(
                   child: Container(
                     padding: EdgeInsets.all(20.0),
