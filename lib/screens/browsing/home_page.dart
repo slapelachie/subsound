@@ -16,6 +16,8 @@ import 'package:subsound/subsonic/requests/get_album_list.dart';
 import 'package:subsound/subsonic/requests/get_artist.dart';
 import 'package:subsound/subsonic/requests/get_playlist.dart';
 
+import '../../components/album_scroll_view.dart';
+
 class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -204,11 +206,13 @@ class StarredListView extends StatelessWidget {
           return AlbumsScrollView(
             title: "Recent albums",
             data: data.recentAlbums,
+            max_count: 10,
           );
         } else if (listIndex == 1) {
           return AlbumsScrollView(
             title: "New albums",
             data: data.newAlbums,
+            max_count: 10,
           );
         } else {
           return PlaylistsScrollView(
@@ -245,114 +249,6 @@ class HomePageTitle extends StatelessWidget {
 const homePaddingLeft = 8.0;
 const homePaddingBottom = 8.0;
 
-class AlbumsScrollView extends StatelessWidget {
-  final List<Album> data;
-  final String title;
-
-  AlbumsScrollView({
-    Key? key,
-    required this.data,
-    required this.title,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    const albumHeight = 150.0;
-    const albumPaddingTop = 8.0;
-
-    final totalCount = data.length;
-    final albums = data.sublist(0, min(10, totalCount));
-
-    return Container(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            HomePageTitle(
-              title,
-            ),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: BouncingScrollPhysics(),
-              child: Row(
-                children: albums
-                    .map(
-                      (a) => Padding(
-                        padding: const EdgeInsets.only(
-                          left: homePaddingLeft,
-                          top: albumPaddingTop,
-                          right: 8.0,
-                          bottom: homePaddingBottom,
-                        ),
-                        child: GestureDetector(
-                          onTap: () => showModalBottomSheet(
-                            isDismissible: true,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            context: context,
-                            builder: (context) => AlbumScreen(
-                              albumId: a.id,
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              ClipRRect(
-                                borderRadius:
-                                    BorderRadius.circular(albumHeight / 10),
-                                child: CoverArtImage(
-                                  a.coverArtLink,
-                                  id: a.coverArtId,
-                                  height: albumHeight,
-                                  width: albumHeight,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              Container(
-                                width: albumHeight,
-                                // color: Colors.black,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    SizedBox(height: homePaddingBottom / 2),
-                                    Text(a.title,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.subtitle1),
-                                    SizedBox(height: homePaddingBottom / 2),
-                                  ],
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ),
-            // ListView.builder(
-            //   scrollDirection: Axis.horizontal,
-            //   itemCount: albums.length,
-            //   itemBuilder: (context, idx) {
-            //     var a = albums[idx];
-            //
-            //     return Container(
-            //       child: CoverArtImage(
-            //         a.coverArtLink,
-            //         id: a.coverArtLink,
-            //       ),
-            //     );
-            //   },
-            // ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class PlaylistsScrollView extends StatelessWidget {
   final List<PlaylistResult> data;

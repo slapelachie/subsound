@@ -2,11 +2,13 @@ import 'package:async_redux/async_redux.dart';
 import 'package:flutter/material.dart';
 import 'package:subsound/components/covert_art.dart';
 import 'package:subsound/components/summary_view.dart';
-import 'package:subsound/screens/browsing/home_page.dart';
 import 'package:subsound/screens/login/album_page.dart';
 import 'package:subsound/state/appcommands.dart';
 import 'package:subsound/state/appstate.dart';
 import 'package:subsound/subsonic/requests/requests.dart';
+import 'package:subsound/subsonic/subsonic.dart';
+
+import '../../components/album_scroll_view.dart';
 
 class ArtistScreen extends StatelessWidget {
   final String artistId;
@@ -143,101 +145,6 @@ class AlbumRow extends StatelessWidget {
   }
 }
 
-// TODO: REMOVE THIS AND CONVERT ALBUMS
-class ArtistAlbumsScrollView extends StatelessWidget {
-  final List<AlbumResultSimple> data;
-  final String title;
-
-  ArtistAlbumsScrollView({
-    Key? key,
-    required this.data,
-    required this.title,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    const albumHeight = 150.0;
-    const albumPaddingTop = 8.0;
-
-    final totalCount = data.length;
-    data.sort(
-      (AlbumResultSimple a, AlbumResultSimple b) => a.year.compareTo(b.year),
-    );
-    final albums = data;
-
-    return Container(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(fontSize: 24.0),
-          ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: BouncingScrollPhysics(),
-            child: Row(
-              children: albums
-                  .map(
-                    (a) => Padding(
-                      padding: const EdgeInsets.only(
-                        top: albumPaddingTop,
-                        right: 16.0,
-                      ),
-                      child: GestureDetector(
-                        onTap: () => showModalBottomSheet(
-                          isDismissible: true,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          context: context,
-                          builder: (context) => AlbumScreen(
-                            albumId: a.id,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            ClipRRect(
-                              borderRadius:
-                                  BorderRadius.circular(albumHeight / 10),
-                              child: CoverArtImage(
-                                a.coverArtLink,
-                                id: a.coverArtId,
-                                height: albumHeight,
-                                width: albumHeight,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            Container(
-                              width: albumHeight,
-                              // color: Colors.black,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(height: homePaddingBottom / 2),
-                                  Text(a.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: theme.textTheme.subtitle1),
-                                  SizedBox(height: homePaddingBottom / 2),
-                                ],
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class ArtistView extends StatelessWidget {
   final ArtistResult artist;
   final Function(AlbumResultSimple) onSelectedAlbum;
@@ -249,6 +156,8 @@ class ArtistView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var expandedHeight = MediaQuery.of(context).size.width * .9;
+    List<Album> albums =
+        artist.albums.map((album) => convertFromSimpleAlbum(album)).toList();
 
     return SummaryView(
       slivers: [
@@ -309,9 +218,13 @@ class ArtistView extends StatelessWidget {
         ),
         SliverToBoxAdapter(
           child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child:
-                  ArtistAlbumsScrollView(data: artist.albums, title: "Albums")),
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: AlbumsScrollView(
+              data: albums,
+              title: "Albums",
+              sort: true,
+            ),
+          ),
         ),
       ],
     );

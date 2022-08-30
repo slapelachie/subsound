@@ -1,3 +1,6 @@
+import 'package:subsound/subsonic/requests/requests.dart';
+import 'package:subsound/subsonic/subsonic.dart';
+
 extension MapFromList<Element> on List<Element> {
   Map<Key, Element> toMap<Key>(
           MapEntry<Key, Element> Function(Element e) getEntry) =>
