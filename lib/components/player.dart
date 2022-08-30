@@ -431,6 +431,7 @@ class PlayerView extends StatelessWidget {
                           backgroundColor: Colors.transparent,
                           builder: (context) => ArtistScreen(
                             artistId: vm.artistId,
+                            artistName: vm.artistTitle,
                           ),
                         ),
                         child: Padding(

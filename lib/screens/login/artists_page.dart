@@ -118,6 +118,8 @@ class _ArtistsPageStatefulState extends State<_ArtistsPageStateful> {
     future = widget.data.loadArtists();
   }
 
+  // FIXME: NULL when artist not found
+  // (why does subsonic require artist name instead of id!)
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -137,8 +139,10 @@ class _ArtistsPageStatefulState extends State<_ArtistsPageStateful> {
                                 entry: a,
                                 onSelected: (entry) {
                                   Navigator.of(context).push(MaterialPageRoute(
-                                    builder: (context) =>
-                                        ArtistScreen(artistId: entry.id),
+                                    builder: (context) => ArtistScreen(
+                                      artistId: entry.id,
+                                      artistName: entry.name,
+                                    ),
                                   ));
                                 },
                               ))

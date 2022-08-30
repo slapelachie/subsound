@@ -1,24 +1,26 @@
 import 'package:async_redux/async_redux.dart';
 import 'package:flutter/material.dart';
 import 'package:subsound/components/covert_art.dart';
-import 'package:subsound/components/summary_view.dart';
 import 'package:subsound/screens/login/album_page.dart';
 import 'package:subsound/state/appcommands.dart';
 import 'package:subsound/state/appstate.dart';
 import 'package:subsound/subsonic/requests/requests.dart';
 import 'package:subsound/subsonic/subsonic.dart';
 import 'package:subsound/utils/duration.dart';
+import 'package:subsound/views/summary_view.dart';
 
-import '../../components/album_scroll_view.dart';
+import '../../views/album_scroll_view.dart';
 
 class ArtistScreen extends StatelessWidget {
   final String artistId;
+  final String artistName;
 
   ArtistScreen({
     required this.artistId,
+    required this.artistName,
   });
 
-  ArtistScreen.of(this.artistId);
+  ArtistScreen.of(this.artistId, this.artistName);
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +28,7 @@ class ArtistScreen extends StatelessWidget {
       child: Center(
         child: ArtistPage(
           artistId: artistId,
+          artistName: artistName,
         ),
       ),
     );
@@ -34,18 +37,22 @@ class ArtistScreen extends StatelessWidget {
 
 class ArtistPageModel extends Vm {
   final Future<ArtistResult?> Function(String artistId) onLoad;
+  final Future<List<Song>?> Function(String artistName) foo;
 
   ArtistPageModel({
     required this.onLoad,
+    required this.foo,
   }) : super(equals: []);
 }
 
 class ArtistPage extends StatelessWidget {
   final String artistId;
+  final String artistName;
 
   const ArtistPage({
     Key? key,
     required this.artistId,
+    required this.artistName,
   }) : super(key: key);
 
   @override
@@ -54,6 +61,7 @@ class ArtistPage extends StatelessWidget {
       vm: () => ArtistPageModelFactory(this),
       builder: (context, vm) => _ArtistPageStateful(
         artistId: artistId,
+        artistName: artistName,
         vm: vm,
       ),
     );
@@ -68,18 +76,22 @@ class ArtistPageModelFactory extends VmFactory<AppState, ArtistPage> {
     return ArtistPageModel(
       onLoad: (artistId) => dispatchAsync(GetArtistCommand(artistId: artistId))
           .then((value) => currentState().dataState.artists.get(artistId)),
+      foo: (artistName) => dispatchAsync(GetTopSongsCommand(artist: artistName))
+          .then((value) => currentState().dataState.topSongs.get(artistName)),
     );
   }
 }
 
 class _ArtistPageStateful extends StatefulWidget {
   final String artistId;
+  final String artistName;
   final ArtistPageModel vm;
 
   _ArtistPageStateful({
     Key? key,
     required this.artistId,
     required this.vm,
+    required this.artistName,
   }) : super(key: key);
 
   @override
@@ -146,13 +158,96 @@ class AlbumRow extends StatelessWidget {
   }
 }
 
+// TODO: add playing from here
+class TopSongRow extends StatelessWidget {
+  //final SongResult song;
+  final Song song;
+  final bool isPlaying;
+  final int position;
+
+  //final Function(SongResult) onPlay;
+  //final Function(SongResult) onEnqueue;
+
+  const TopSongRow({
+    Key? key,
+    required this.song,
+    required this.isPlaying,
+    required this.position,
+    //required this.onPlay,
+    //required this.onEnqueue,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    var theme = Theme.of(context);
+    return Container(
+      padding: EdgeInsets.only(left: 10),
+      child: ListTile(
+        onTap: () {
+          //onPlay(song);
+        },
+        leading: Column(
+          //mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              "${position}",
+              style: TextStyle(
+                  // color: isPlaying
+                  //     ? theme.accentColor
+                  //     : theme.colorScheme.onPrimary.withOpacity(0.7),
+                  ),
+            ),
+          ],
+        ),
+        dense: true,
+        minLeadingWidth: 15,
+        title: Text(
+          song.title,
+          style: TextStyle(
+            color: isPlaying
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.left,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(stringDuration(song.duration)),
+            PopupMenuButton(
+              itemBuilder: (context) {
+                return [
+                  PopupMenuItem(
+                    child: Text("Add to queue"),
+                    //onTap: onEnqueue(song),
+                  )
+                ];
+              },
+            )
+          ],
+        ),
+        subtitle: Text(song.artist),
+      ),
+    );
+  }
+}
+
+// TODO: Add ability to specify amount of top songs
 class ArtistView extends StatelessWidget {
   final ArtistResult artist;
+  final List<Song> topSongs;
   final Function(AlbumResultSimple) onSelectedAlbum;
 
-  const ArtistView(
-      {Key? key, required this.artist, required this.onSelectedAlbum})
-      : super(key: key);
+  const ArtistView({
+    Key? key,
+    required this.artist,
+    required this.onSelectedAlbum,
+    required this.topSongs,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -166,7 +261,6 @@ class ArtistView extends StatelessWidget {
       duration += album.duration;
       songCount += album.songCount;
     });
-
 
     return SummaryView(
       slivers: [
@@ -233,6 +327,44 @@ class ArtistView extends StatelessWidget {
               title: "Albums",
               sort: true,
             ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: topSongs.isEmpty
+              ? SizedBox()
+              : Container(
+                  alignment: Alignment.centerLeft,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20,
+                  ),
+                  child: Text(
+                    "Top Songs",
+                    style: TextStyle(
+                      fontSize: 24.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+        ),
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (BuildContext context, int index) {
+              final song = topSongs[index];
+              /*final isPlaying =
+                  currentSongId != null && currentSongId == song.id;*/
+              return TopSongRow(
+                isPlaying: false,
+                song: song,
+                position: index + 1,
+                /*onEnqueue: (song) {
+                  onEnqueue(song);
+                },
+                onPlay: (song) {
+                  onPlay(song.id, album);
+                },*/
+              );
+            },
+            childCount: topSongs.length,
           ),
         ),
       ],
@@ -357,6 +489,7 @@ class AlbumList extends StatelessWidget {
 
 class _ArtistPageState extends State<_ArtistPageStateful> {
   late Future<ArtistResult> loader;
+  late Future<List<Song>> topSongs;
 
   _ArtistPageState();
 
@@ -364,14 +497,15 @@ class _ArtistPageState extends State<_ArtistPageStateful> {
   void initState() {
     super.initState();
     loader = load(widget.artistId);
+    topSongs = loadTopSongs(widget.artistName);
   }
 
   @override
   Widget build(BuildContext context) {
     return Center(
-        child: FutureBuilder<ArtistResult>(
-            future: loader,
-            builder: (context, snapshot) {
+        child: FutureBuilder(
+            future: Future.wait([loader, topSongs]),
+            builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
               if (snapshot.connectionState != ConnectionState.done) {
                 return SummaryView(
                   slivers: [
@@ -383,7 +517,8 @@ class _ArtistPageState extends State<_ArtistPageStateful> {
               } else {
                 if (snapshot.hasData) {
                   return ArtistView(
-                    artist: snapshot.data!,
+                    artist: snapshot.data![0],
+                    topSongs: snapshot.data![1],
                     onSelectedAlbum: (album) {
                       return showModalBottomSheet(
                         isDismissible: true,
@@ -405,5 +540,9 @@ class _ArtistPageState extends State<_ArtistPageStateful> {
 
   Future<ArtistResult> load(String artistId) {
     return widget.vm.onLoad(artistId).then((value) => value!);
+  }
+
+  Future<List<Song>> loadTopSongs(String artistName) {
+    return widget.vm.foo(artistName).then((value) => value!);
   }
 }

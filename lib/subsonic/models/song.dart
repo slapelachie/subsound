@@ -64,7 +64,7 @@ class Song {
       bitRate: data['bitRate'] as int,
       path: data['path'] as String,
       isVideo: data['isVideo'] as bool,
-      playCount: data['playCount'] as int,
+      playCount: data['playCount'] as int? ?? 0,
       created: DateTime.parse(data['created'] as String),
       albumId: data['albumId'].toString(),
       artistId: data['artistId'].toString(),

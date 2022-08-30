@@ -16,7 +16,7 @@ import 'package:subsound/subsonic/requests/get_album_list.dart';
 import 'package:subsound/subsonic/requests/get_artist.dart';
 import 'package:subsound/subsonic/requests/get_playlist.dart';
 
-import '../../components/album_scroll_view.dart';
+import '../../views/album_scroll_view.dart';
 
 class HomePage extends StatelessWidget {
   @override

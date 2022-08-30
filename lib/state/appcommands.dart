@@ -10,6 +10,7 @@ import 'package:subsound/state/database/scrobbles_db.dart';
 import 'package:subsound/state/errors.dart';
 import 'package:subsound/state/playerstate.dart';
 import 'package:subsound/storage/cache.dart';
+import 'package:subsound/subsonic/models/song.dart';
 import 'package:subsound/subsonic/requests/get_album.dart';
 import 'package:subsound/subsonic/requests/get_album_list.dart';
 import 'package:subsound/subsonic/requests/get_album_list2.dart';
@@ -18,6 +19,7 @@ import 'package:subsound/subsonic/requests/get_artists.dart';
 import 'package:subsound/subsonic/requests/get_playlist.dart';
 import 'package:subsound/subsonic/requests/get_playlists.dart';
 import 'package:subsound/subsonic/requests/get_starred2.dart';
+import 'package:subsound/subsonic/requests/get_top_songs.dart';
 import 'package:subsound/subsonic/requests/ping.dart';
 import 'package:subsound/subsonic/requests/post_scrobble.dart';
 import 'package:subsound/subsonic/requests/requests.dart';
@@ -278,6 +280,36 @@ class GetArtistCommand extends RunRequest {
       dataState: state.dataState.copy(
         artists: artists,
         albums: albums,
+      ),
+    );
+  }
+}
+
+class GetTopSongsCommand extends RunRequest {
+  final String artist;
+  final int count;
+
+  GetTopSongsCommand({
+    required this.artist,
+    this.count = 10,
+  });
+
+  @override
+  Future<AppState?> reduce() async {
+    List<Song>? topSongsCached = state.dataState.topSongs.get(artist);
+    if (topSongsCached != null) {
+      return null;
+    }
+    final subsonicResponse =
+    await GetTopSongs(artist: artist, count: count).run(state.loginState.toClient());
+
+    List<Song> topSongsResult = subsonicResponse.data;
+
+    final topSongs = state.dataState.topSongs.add(artist, topSongsResult);
+
+    return state.copy(
+      dataState: state.dataState.copy(
+        topSongs: topSongs,
       ),
     );
   }

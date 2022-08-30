@@ -21,6 +21,9 @@ import 'package:subsound/subsonic/requests/requests.dart';
 import 'package:subsound/utils/utils.dart';
 import 'package:uuid/uuid.dart';
 
+import '../subsonic/models/song.dart';
+import '../subsonic/requests/get_top_songs.dart';
+
 final uuid = Uuid();
 
 Store<AppState> createStore() => Store<AppState>(
@@ -364,6 +367,22 @@ class Searches {
   }
 }
 
+class TopSongs {
+  final Map<String, List<Song>> _top_songs;
+
+  TopSongs(this._top_songs);
+
+  TopSongs add(String artist, List<Song> s) {
+    final next = Map.of(_top_songs);
+    next[artist] = s;
+    return TopSongs(next);
+  }
+
+  List<Song>? get(String artist) {
+    return _top_songs[artist];
+  }
+}
+
 class DataState {
   final Starred stars;
   final Albums albums;
@@ -371,6 +390,7 @@ class DataState {
   final Artists artists;
   final Playlists playlists;
   final Searches searches;
+  final TopSongs topSongs;
 
   DataState({
     required this.stars,
@@ -379,16 +399,17 @@ class DataState {
     required this.artists,
     required this.playlists,
     required this.searches,
+    required this.topSongs,
   });
 
-  DataState copy({
-    Starred? stars,
-    Albums? albums,
-    Songs? songs,
-    Artists? artists,
-    Playlists? playlists,
-    Searches? searches,
-  }) =>
+  DataState copy(
+          {Starred? stars,
+          Albums? albums,
+          Songs? songs,
+          Artists? artists,
+          Playlists? playlists,
+          Searches? searches,
+          TopSongs? topSongs}) =>
       DataState(
         stars: stars ?? this.stars,
         albums: albums ?? this.albums,
@@ -396,6 +417,7 @@ class DataState {
         artists: artists ?? this.artists,
         playlists: playlists ?? this.playlists,
         searches: searches ?? this.searches,
+        topSongs: topSongs ?? this.topSongs,
       );
 
   static DataState initialState() => DataState(
@@ -405,11 +427,15 @@ class DataState {
         artists: Artists({}, [], {}),
         playlists: Playlists({}, {}),
         searches: Searches({}),
+        topSongs: TopSongs({}),
       );
 
   bool isStarred(SongResult s) => stars.songs.containsKey(s.id);
+
   bool isSongStarred(String id) => stars.songs.containsKey(id);
+
   bool isAlbumStarred(AlbumResult a) => stars.albums.containsKey(a.id);
+
   bool isAlbumIdStarred(String albumId) => stars.albums.containsKey(albumId);
 
   @override
@@ -563,6 +589,7 @@ class ServerData {
 
 class StartRequest extends ReduxAction<AppState> {
   final String requestId;
+
   StartRequest(this.requestId);
 
   @override
@@ -574,6 +601,7 @@ class StartRequest extends ReduxAction<AppState> {
 
 class FinishRequest extends ReduxAction<AppState> {
   final String requestId;
+
   FinishRequest(this.requestId);
 
   @override

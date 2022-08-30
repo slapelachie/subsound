@@ -309,8 +309,10 @@ class AlbumView extends StatelessWidget {
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    ArtistScreen(artistId: album.artistId),
+                                builder: (context) => ArtistScreen(
+                                  artistId: album.artistId,
+                                  artistName: album.artistName,
+                                ),
                               ),
                             );
                           },

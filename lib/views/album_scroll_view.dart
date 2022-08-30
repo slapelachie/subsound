@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../screens/login/album_page.dart';
 import '../subsonic/models/album.dart';
-import 'covert_art.dart';
+import '../components/covert_art.dart';
 
 class AlbumsScrollView extends StatelessWidget {
   final List<Album> data;
