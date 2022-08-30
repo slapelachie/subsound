@@ -7,6 +7,7 @@ import 'package:subsound/state/appcommands.dart';
 import 'package:subsound/state/appstate.dart';
 import 'package:subsound/subsonic/requests/requests.dart';
 import 'package:subsound/subsonic/subsonic.dart';
+import 'package:subsound/utils/duration.dart';
 
 import '../../components/album_scroll_view.dart';
 
@@ -156,8 +157,16 @@ class ArtistView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var expandedHeight = MediaQuery.of(context).size.width * .9;
+    Duration duration = Duration(milliseconds: 0);
+    int songCount = 0;
     List<Album> albums =
         artist.albums.map((album) => convertFromSimpleAlbum(album)).toList();
+
+    artist.albums.forEach((album) {
+      duration += album.duration;
+      songCount += album.songCount;
+    });
+
 
     return SummaryView(
       slivers: [
@@ -204,11 +213,11 @@ class ArtistView extends StatelessWidget {
                     ),
                     VerticalDivider(),
                     Text(
-                      "FOO",
+                      songCount.toString() + " Songs",
                     ),
                     VerticalDivider(),
                     Text(
-                      "BAR",
+                      formatDuration(duration),
                     ),
                   ],
                 )

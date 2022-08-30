@@ -22,11 +22,11 @@ String formatDuration(Duration duration) {
   final hours = duration.inHours;
   var minutes = duration.inMinutes;
   if (minutes > 75) {
-    minutes = minutes - (hours * 60);
-    var seconds = duration.inSeconds - (minutes * 60);
+    minutes = minutes % 60;
+    var seconds = duration.inSeconds % 60;
     return '$hours:${twoDigits(minutes)}:${twoDigits(seconds)}';
   } else {
-    var seconds = duration.inSeconds - (minutes * 60);
+    var seconds = duration.inSeconds % 60;
     return '$minutes:${twoDigits(seconds)}';
   }
 }
