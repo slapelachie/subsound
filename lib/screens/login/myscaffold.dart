@@ -14,6 +14,7 @@ import 'package:subsound/screens/login/loginscreen.dart';
 import 'package:subsound/state/appstate.dart';
 import 'package:we_slide/we_slide.dart';
 
+import '../main_page.dart';
 import 'homescreen.dart';
 
 class SlidingHome extends StatelessWidget {
@@ -28,21 +29,6 @@ class SlidingHome extends StatelessWidget {
       ),
     );
   }
-}
-
-class AppScaffoldModel extends Vm {
-  final StartUpState startUpState;
-  final bool hasSong;
-
-  AppScaffoldModel({
-    required this.startUpState,
-    required this.hasSong,
-  }) : super(equals: [startUpState, hasSong]);
-
-  static AppScaffoldModel fromStore(Store<AppState> store) => AppScaffoldModel(
-        startUpState: store.state.startUpState,
-        hasSong: store.state.playerState.currentSong != null,
-      );
 }
 
 /// AppBarSettings exists because we sometimes need a SliverAppBar
@@ -225,52 +211,6 @@ class RootScreen extends StatelessWidget {
           return HomeScreen();
         }
       },
-    );
-  }
-}
-
-class SplashScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        //color: Colors.white,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Sub",
-              style: TextStyle(
-                fontSize: 40.0,
-                //color: Theme.of(context).primaryColor,
-                //color: Colors.tealAccent,
-                color: Colors.white,
-                decoration: TextDecoration.none,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 20.0),
-            Icon(
-              Icons.play_arrow,
-              size: 36.0,
-            ),
-            SizedBox(height: 20.0),
-            Text(
-              "Sound",
-              style: TextStyle(
-                fontSize: 32.0,
-                //color: Theme.of(context).primaryColor,
-                //color: Colors.tealAccent,
-                color: Colors.white,
-                decoration: TextDecoration.none,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 20.0),
-            //CircularProgressIndicator(),
-          ],
-        ),
-      ),
     );
   }
 }

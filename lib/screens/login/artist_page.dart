@@ -90,7 +90,7 @@ class ArtistPageModelFactory extends VmFactory<AppState, ArtistPage> {
             dispatchAsync(GetArtistCommand(artistId: artistId)).then(
                 (value) => currentState().dataState.artists.get(artistId)),
         onLoadTopSongs: (artistName) =>
-            dispatchAsync(GetTopSongsCommand(artist: artistName)).then(
+            dispatchAsync(GetTopSongsCommand(artist: artistName, count: 5)).then(
                 (value) => currentState().dataState.topSongs.get(artistName)),
         onEnqueue: (SongResult song) {
           dispatch(PlayerCommandEnqueueSong(song));
@@ -184,7 +184,6 @@ class AlbumRow extends StatelessWidget {
   }
 }
 
-// TODO: add playing from here
 class TopSongRow extends StatelessWidget {
   final SongResult song;
   final bool isPlaying;
@@ -260,7 +259,6 @@ class TopSongRow extends StatelessWidget {
   }
 }
 
-// TODO: Add ability to specify amount of top songs
 class ArtistView extends StatelessWidget {
   final ArtistResult artist;
   final List<SongResult> topSongs;
@@ -453,7 +451,9 @@ class _ArtistPageState extends State<_ArtistPageStateful> {
                 return SummaryView(
                   slivers: [
                     SliverToBoxAdapter(
-                      child: CircularProgressIndicator(),
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
                     ),
                   ],
                 );
