@@ -4,11 +4,13 @@ import 'package:subsound/components/covert_art.dart';
 import 'package:subsound/screens/login/album_page.dart';
 import 'package:subsound/state/appcommands.dart';
 import 'package:subsound/state/appstate.dart';
+import 'package:subsound/subsonic/requests/get_album.dart';
 import 'package:subsound/subsonic/requests/requests.dart';
 import 'package:subsound/subsonic/subsonic.dart';
 import 'package:subsound/utils/duration.dart';
 import 'package:subsound/views/summary_view.dart';
 
+import '../../state/playerstate.dart';
 import '../../views/album_scroll_view.dart';
 
 class ArtistScreen extends StatelessWidget {
@@ -37,11 +39,13 @@ class ArtistScreen extends StatelessWidget {
 
 class ArtistPageModel extends Vm {
   final Future<ArtistResult?> Function(String artistId) onLoad;
-  final Future<List<Song>?> Function(String artistName) foo;
+  final Future<List<SongResult>?> Function(String artistName) foo;
+  final Function(SongResult song) onEnqueue;
 
   ArtistPageModel({
     required this.onLoad,
     required this.foo,
+    required this.onEnqueue,
   }) : super(equals: []);
 }
 
@@ -62,6 +66,7 @@ class ArtistPage extends StatelessWidget {
       builder: (context, vm) => _ArtistPageStateful(
         artistId: artistId,
         artistName: artistName,
+        onEnqueue: vm.onEnqueue,
         vm: vm,
       ),
     );
@@ -74,11 +79,15 @@ class ArtistPageModelFactory extends VmFactory<AppState, ArtistPage> {
   @override
   ArtistPageModel fromStore() {
     return ArtistPageModel(
-      onLoad: (artistId) => dispatchAsync(GetArtistCommand(artistId: artistId))
-          .then((value) => currentState().dataState.artists.get(artistId)),
-      foo: (artistName) => dispatchAsync(GetTopSongsCommand(artist: artistName))
-          .then((value) => currentState().dataState.topSongs.get(artistName)),
-    );
+        onLoad: (artistId) =>
+            dispatchAsync(GetArtistCommand(artistId: artistId)).then(
+                (value) => currentState().dataState.artists.get(artistId)),
+        foo: (artistName) =>
+            dispatchAsync(GetTopSongsCommand(artist: artistName)).then(
+                (value) => currentState().dataState.topSongs.get(artistName)),
+        onEnqueue: (SongResult song) {
+          dispatch(PlayerCommandEnqueueSong(song));
+        });
   }
 }
 
@@ -86,12 +95,14 @@ class _ArtistPageStateful extends StatefulWidget {
   final String artistId;
   final String artistName;
   final ArtistPageModel vm;
+  final Function(SongResult song) onEnqueue;
 
   _ArtistPageStateful({
     Key? key,
     required this.artistId,
     required this.vm,
     required this.artistName,
+    required this.onEnqueue,
   }) : super(key: key);
 
   @override
@@ -160,13 +171,12 @@ class AlbumRow extends StatelessWidget {
 
 // TODO: add playing from here
 class TopSongRow extends StatelessWidget {
-  //final SongResult song;
-  final Song song;
+  final SongResult song;
   final bool isPlaying;
   final int position;
+  final Function(SongResult) onEnqueue;
 
   //final Function(SongResult) onPlay;
-  //final Function(SongResult) onEnqueue;
 
   const TopSongRow({
     Key? key,
@@ -174,7 +184,7 @@ class TopSongRow extends StatelessWidget {
     required this.isPlaying,
     required this.position,
     //required this.onPlay,
-    //required this.onEnqueue,
+    required this.onEnqueue,
   }) : super(key: key);
 
   @override
@@ -223,14 +233,14 @@ class TopSongRow extends StatelessWidget {
                 return [
                   PopupMenuItem(
                     child: Text("Add to queue"),
-                    //onTap: onEnqueue(song),
+                    onTap: onEnqueue(song),
                   )
                 ];
               },
             )
           ],
         ),
-        subtitle: Text(song.artist),
+        subtitle: Text(song.albumName),
       ),
     );
   }
@@ -239,14 +249,16 @@ class TopSongRow extends StatelessWidget {
 // TODO: Add ability to specify amount of top songs
 class ArtistView extends StatelessWidget {
   final ArtistResult artist;
-  final List<Song> topSongs;
+  final List<SongResult> topSongs;
   final Function(AlbumResultSimple) onSelectedAlbum;
+  final Function(SongResult song) onEnqueue;
 
   const ArtistView({
     Key? key,
     required this.artist,
     required this.onSelectedAlbum,
     required this.topSongs,
+    required this.onEnqueue,
   }) : super(key: key);
 
   @override
@@ -356,9 +368,10 @@ class ArtistView extends StatelessWidget {
                 isPlaying: false,
                 song: song,
                 position: index + 1,
-                /*onEnqueue: (song) {
+                onEnqueue: (song) {
                   onEnqueue(song);
                 },
+                /*
                 onPlay: (song) {
                   onPlay(song.id, album);
                 },*/
@@ -489,7 +502,7 @@ class AlbumList extends StatelessWidget {
 
 class _ArtistPageState extends State<_ArtistPageStateful> {
   late Future<ArtistResult> loader;
-  late Future<List<Song>> topSongs;
+  late Future<List<SongResult>> topSongs;
 
   _ArtistPageState();
 
@@ -519,6 +532,7 @@ class _ArtistPageState extends State<_ArtistPageStateful> {
                   return ArtistView(
                     artist: snapshot.data![0],
                     topSongs: snapshot.data![1],
+                    onEnqueue: widget.onEnqueue,
                     onSelectedAlbum: (album) {
                       return showModalBottomSheet(
                         isDismissible: true,
@@ -542,7 +556,7 @@ class _ArtistPageState extends State<_ArtistPageStateful> {
     return widget.vm.onLoad(artistId).then((value) => value!);
   }
 
-  Future<List<Song>> loadTopSongs(String artistName) {
+  Future<List<SongResult>> loadTopSongs(String artistName) {
     return widget.vm.foo(artistName).then((value) => value!);
   }
 }

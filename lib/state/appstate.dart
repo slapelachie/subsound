@@ -368,17 +368,17 @@ class Searches {
 }
 
 class TopSongs {
-  final Map<String, List<Song>> _top_songs;
+  final Map<String, List<SongResult>> _top_songs;
 
   TopSongs(this._top_songs);
 
-  TopSongs add(String artist, List<Song> s) {
+  TopSongs add(String artist, List<SongResult> s) {
     final next = Map.of(_top_songs);
     next[artist] = s;
     return TopSongs(next);
   }
 
-  List<Song>? get(String artist) {
+  List<SongResult>? get(String artist) {
     return _top_songs[artist];
   }
 }

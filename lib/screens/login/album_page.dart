@@ -306,16 +306,16 @@ class AlbumView extends StatelessWidget {
                           ),
                         ),
                         GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => ArtistScreen(
-                                  artistId: album.artistId,
-                                  artistName: album.artistName,
-                                ),
-                              ),
-                            );
-                          },
+                          onTap: () => showModalBottomSheet(
+                            context: context,
+                            isDismissible: true,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => ArtistScreen(
+                              artistId: album.artistId,
+                              artistName: album.artistName,
+                            ),
+                          ),
                           child: Row(
                             children: [
                               Text(

@@ -296,14 +296,14 @@ class GetTopSongsCommand extends RunRequest {
 
   @override
   Future<AppState?> reduce() async {
-    List<Song>? topSongsCached = state.dataState.topSongs.get(artist);
+    List<SongResult>? topSongsCached = state.dataState.topSongs.get(artist);
     if (topSongsCached != null) {
       return null;
     }
     final subsonicResponse =
     await GetTopSongs(artist: artist, count: count).run(state.loginState.toClient());
 
-    List<Song> topSongsResult = subsonicResponse.data;
+    List<SongResult> topSongsResult = subsonicResponse.data;
 
     final topSongs = state.dataState.topSongs.add(artist, topSongsResult);
 

@@ -1,19 +1,21 @@
 import 'dart:convert';
 
+import 'package:subsound/subsonic/requests/get_album.dart';
+
 import '../base_request.dart';
 import '../context.dart';
-import '../models/song.dart';
 import '../response.dart';
 
+// TODO: change to using list of SongResult instead of Song
 class TopSongsResult {
-  final List<Song> songs;
+  final List<SongResult> songs;
 
   TopSongsResult({
     required this.songs,
   });
 }
 
-class GetTopSongs extends BaseRequest<List<Song>> {
+class GetTopSongs extends BaseRequest<List<SongResult>> {
   final String artist;
   final int count;
 
@@ -26,7 +28,7 @@ class GetTopSongs extends BaseRequest<List<Song>> {
   String get sinceVersion => "1.2.0";
 
   @override
-  Future<SubsonicResponse<List<Song>>> run(SubsonicContext ctx) async {
+  Future<SubsonicResponse<List<SongResult>>> run(SubsonicContext ctx) async {
     print('$artist,$count');
     final response = await ctx.client.get(ctx.buildRequestUri(
       "getTopSongs",
@@ -37,21 +39,23 @@ class GetTopSongs extends BaseRequest<List<Song>> {
     ));
 
     final json =
-    jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
     final data = json['subsonic-response'];
 
     if (data['status'] != 'ok') {
       throw Exception(data);
     }
 
-    print(data['topSongs']);
+    final List<dynamic>? songList = data['topSongs']['song'] as List<dynamic>;
+    final songs =
+        List<Map<String, dynamic>>.from(songList ?? []).map((songData) {
+      return SongResult.fromJson(songData, ctx);
+    }).toList();
 
     return SubsonicResponse(
       ResponseStatus.ok,
       ctx.version,
-      ((data['topSongs']['song'] ?? []) as List)
-          .map((song) => Song.parse(song as Map<String, dynamic>))
-          .toList(),
+      songs,
     );
   }
 }
