@@ -38,14 +38,18 @@ class ArtistScreen extends StatelessWidget {
 }
 
 class ArtistPageModel extends Vm {
+  final String? currentSongId;
   final Future<ArtistResult?> Function(String artistId) onLoad;
-  final Future<List<SongResult>?> Function(String artistName) foo;
+  final Future<List<SongResult>?> Function(String artistName) onLoadTopSongs;
   final Function(SongResult song) onEnqueue;
+  final Function(SongResult song, List<SongResult> topSongs) onPlay;
 
   ArtistPageModel({
+    required this.currentSongId,
     required this.onLoad,
-    required this.foo,
+    required this.onLoadTopSongs,
     required this.onEnqueue,
+    required this.onPlay,
   }) : super(equals: []);
 }
 
@@ -66,7 +70,9 @@ class ArtistPage extends StatelessWidget {
       builder: (context, vm) => _ArtistPageStateful(
         artistId: artistId,
         artistName: artistName,
+        currentSongId: vm.currentSongId,
         onEnqueue: vm.onEnqueue,
+        onPlay: vm.onPlay,
         vm: vm,
       ),
     );
@@ -79,14 +85,19 @@ class ArtistPageModelFactory extends VmFactory<AppState, ArtistPage> {
   @override
   ArtistPageModel fromStore() {
     return ArtistPageModel(
+        currentSongId: state.playerState.currentSong?.id,
         onLoad: (artistId) =>
             dispatchAsync(GetArtistCommand(artistId: artistId)).then(
                 (value) => currentState().dataState.artists.get(artistId)),
-        foo: (artistName) =>
+        onLoadTopSongs: (artistName) =>
             dispatchAsync(GetTopSongsCommand(artist: artistName)).then(
                 (value) => currentState().dataState.topSongs.get(artistName)),
         onEnqueue: (SongResult song) {
           dispatch(PlayerCommandEnqueueSong(song));
+        },
+        onPlay: (SongResult song, List<SongResult> topSongs) {
+          dispatch(
+              PlayerCommandPlaySongInQueue(song: song, songQueue: topSongs));
         });
   }
 }
@@ -94,15 +105,19 @@ class ArtistPageModelFactory extends VmFactory<AppState, ArtistPage> {
 class _ArtistPageStateful extends StatefulWidget {
   final String artistId;
   final String artistName;
+  final String? currentSongId;
   final ArtistPageModel vm;
   final Function(SongResult song) onEnqueue;
+  final Function(SongResult song, List<SongResult> topSongs) onPlay;
 
   _ArtistPageStateful({
     Key? key,
     required this.artistId,
-    required this.vm,
     required this.artistName,
+    required this.currentSongId,
+    required this.vm,
     required this.onEnqueue,
+    required this.onPlay,
   }) : super(key: key);
 
   @override
@@ -175,15 +190,14 @@ class TopSongRow extends StatelessWidget {
   final bool isPlaying;
   final int position;
   final Function(SongResult) onEnqueue;
-
-  //final Function(SongResult) onPlay;
+  final Function(SongResult) onPlay;
 
   const TopSongRow({
     Key? key,
     required this.song,
     required this.isPlaying,
     required this.position,
-    //required this.onPlay,
+    required this.onPlay,
     required this.onEnqueue,
   }) : super(key: key);
 
@@ -194,7 +208,7 @@ class TopSongRow extends StatelessWidget {
       padding: EdgeInsets.only(left: 10),
       child: ListTile(
         onTap: () {
-          //onPlay(song);
+          onPlay(song);
         },
         leading: Column(
           //mainAxisSize: MainAxisSize.min,
@@ -250,15 +264,19 @@ class TopSongRow extends StatelessWidget {
 class ArtistView extends StatelessWidget {
   final ArtistResult artist;
   final List<SongResult> topSongs;
+  final String? currentSongId;
   final Function(AlbumResultSimple) onSelectedAlbum;
   final Function(SongResult song) onEnqueue;
+  final Function(SongResult song, List<SongResult> topSongs) onPlay;
 
   const ArtistView({
     Key? key,
     required this.artist,
     required this.onSelectedAlbum,
+    required this.currentSongId,
     required this.topSongs,
     required this.onEnqueue,
+    required this.onPlay,
   }) : super(key: key);
 
   @override
@@ -362,19 +380,19 @@ class ArtistView extends StatelessWidget {
           delegate: SliverChildBuilderDelegate(
             (BuildContext context, int index) {
               final song = topSongs[index];
-              /*final isPlaying =
-                  currentSongId != null && currentSongId == song.id;*/
+              final isPlaying =
+                  currentSongId != null && currentSongId == song.id;
+
               return TopSongRow(
-                isPlaying: false,
+                isPlaying: isPlaying,
                 song: song,
                 position: index + 1,
                 onEnqueue: (song) {
                   onEnqueue(song);
                 },
-                /*
                 onPlay: (song) {
-                  onPlay(song.id, album);
-                },*/
+                  onPlay(song, topSongs);
+                },
               );
             },
             childCount: topSongs.length,
@@ -382,94 +400,6 @@ class ArtistView extends StatelessWidget {
         ),
       ],
     );
-
-    // var expandedHeight = MediaQuery.of(context).size.height / 3;
-    //var expandedHeight = 350.0;
-
-    /*
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomCenter,
-          stops: [0.0, 0.8],
-          colors: [
-            Colors.blueGrey.withOpacity(0.7),
-            Colors.black.withOpacity(0.7),
-          ],
-        ),
-      ),
-      child: CustomScrollView(
-        primary: true,
-        physics: BouncingScrollPhysics(
-          parent: AlwaysScrollableScrollPhysics(),
-        ),
-        slivers: <Widget>[
-          SliverAppBar(
-            backgroundColor: Colors.black54,
-            expandedHeight: expandedHeight,
-            stretch: true,
-            centerTitle: false,
-            snap: false,
-            floating: false,
-            pinned: true,
-            primary: true,
-            flexibleSpace: FlexibleSpaceBar(
-              centerTitle: false,
-              //titlePadding: EdgeInsets.only(left: 5.0, bottom: 10.0),
-              title: Text(
-                artist.name,
-                //textAlign: TextAlign.start,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14.0,
-                ),
-              ),
-              collapseMode: CollapseMode.parallax,
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  ConstrainedBox(
-                    constraints: BoxConstraints.tightFor(width: 450.0),
-                    child: CoverArtImage(
-                      artist.coverArtLink,
-                      id: artist.coverArtId,
-                      height: expandedHeight * 1.6,
-                      width: expandedHeight * 1.6,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        // end: Alignment(0.0, 0.0),
-                        begin: Alignment.bottomCenter,
-                        end: Alignment(0.0, 0.0),
-                        colors: <Color>[
-                          Color(0x60000000),
-                          Color(0x00000000),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              stretchModes: [
-                StretchMode.fadeTitle,
-                StretchMode.zoomBackground,
-                //StretchMode.blurBackground,
-              ],
-            ),
-          ),
-          SliverList(
-            delegate: SliverChildListDelegate(artist.albums
-                .map((album) =>
-                    AlbumRow(album: album, onSelectedAlbum: onSelectedAlbum))
-                .toList()),
-          ),
-        ],
-      ),
-    );*/
   }
 }
 
@@ -533,6 +463,8 @@ class _ArtistPageState extends State<_ArtistPageStateful> {
                     artist: snapshot.data![0],
                     topSongs: snapshot.data![1],
                     onEnqueue: widget.onEnqueue,
+                    onPlay: widget.onPlay,
+                    currentSongId: widget.currentSongId,
                     onSelectedAlbum: (album) {
                       return showModalBottomSheet(
                         isDismissible: true,
@@ -557,6 +489,6 @@ class _ArtistPageState extends State<_ArtistPageStateful> {
   }
 
   Future<List<SongResult>> loadTopSongs(String artistName) {
-    return widget.vm.foo(artistName).then((value) => value!);
+    return widget.vm.onLoadTopSongs(artistName).then((value) => value!);
   }
 }

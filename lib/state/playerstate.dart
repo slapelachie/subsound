@@ -226,9 +226,9 @@ class PlayerCommandPlayAlbum extends PlayerActions {
     final albumData = await GetAlbum(album.id).run(state.loginState.toClient());
     final song = albumData.data.songs.first;
 
-    await dispatch(PlayerCommandPlaySongInAlbum(
-      songId: song.id,
-      album: albumData.data,
+    await dispatch(PlayerCommandPlaySongInQueue(
+      song: song,
+      songQueue: albumData.data.songs,
     ));
 
     return state;
@@ -411,15 +411,18 @@ class PlayerCommandContextualPlay extends PlayerActions {
   }
 }
 
-class PlayerCommandPlaySongInAlbum extends PlayerActions {
-  final String songId;
-  final AlbumResult album;
+class PlayerCommandPlaySongInQueue extends PlayerActions {
+  final SongResult song;
+  final List<SongResult> songQueue;
 
-  PlayerCommandPlaySongInAlbum({required this.songId, required this.album});
+  PlayerCommandPlaySongInQueue({
+    required this.song,
+    required this.songQueue,
+  });
 
   @override
   Future<AppState?> reduce() async {
-    List<QueueItem> queue = album.songs
+    List<QueueItem> queue = songQueue
         .map((SongResult e) => PlayerSong.from(
               e,
               e.starred || state.dataState.isSongStarred(e.id),
@@ -427,7 +430,7 @@ class PlayerCommandPlaySongInAlbum extends PlayerActions {
         .map((song) => QueueItem(song, QueuePriority.low))
         .toList();
 
-    var selectedIdx = queue.indexWhere((element) => element.song.id == songId);
+    var selectedIdx = queue.indexWhere((element) => element.song.id == song.id);
     var selected = queue[selectedIdx].song;
 
     await dispatch(PlayerCommandSetCurrentPlaying(
@@ -436,9 +439,9 @@ class PlayerCommandPlaySongInAlbum extends PlayerActions {
       queue: Queue(queue, selectedIdx),
     ));
 
-    final mediaQueue = album.songs
+    final mediaQueue = songQueue
         .map((s) => s.toMediaItem(
-              playNow: s.id == songId,
+              playNow: s.id == song.id,
             ))
         .toList();
 

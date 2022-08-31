@@ -22,8 +22,8 @@ class _AlbumViewModelFactory extends VmFactory<AppState, AlbumScreen> {
         return dispatchAsync(GetAlbumCommand(albumId: albumId))
             .then((value) => currentState().dataState.albums.get(albumId));
       },
-      onPlay: (String songId, AlbumResult album) {
-        dispatch(PlayerCommandPlaySongInAlbum(songId: songId, album: album));
+      onPlay: (SongResult song, List<SongResult> albumSongs) {
+        dispatch(PlayerCommandPlaySongInQueue(song: song, songQueue: albumSongs));
       },
       onEnqueue: (SongResult song) {
         dispatch(PlayerCommandEnqueueSong(song));
@@ -36,7 +36,7 @@ class AlbumViewModel extends Vm {
   final ServerData serverData;
   final String? currentSongId;
   final Future<AlbumResult?> Function(String albumId) loadAlbum;
-  final Function(String songId, AlbumResult album) onPlay;
+  final Function(SongResult song, List<SongResult> albumSongs) onPlay;
   final Function(SongResult song) onEnqueue;
 
   AlbumViewModel({
@@ -85,7 +85,7 @@ class AlbumPage extends StatefulWidget {
   final String albumId;
   final String? currentSongId;
   final Future<AlbumResult?> Function(String albumId) loadAlbum;
-  final Function(String songId, AlbumResult album) onPlay;
+  final Function(SongResult song, List<SongResult> albumSongs) onPlay;
   final Function(SongResult song) onEnqueue;
 
   const AlbumPage({
@@ -228,7 +228,7 @@ class SongRow extends StatelessWidget {
 class AlbumView extends StatelessWidget {
   final AlbumResult album;
   final String? currentSongId;
-  final Function(String songId, AlbumResult album) onPlay;
+  final Function(SongResult song, List<SongResult> albumSongs) onPlay;
   final Function(SongResult song) onEnqueue;
 
   AlbumView({
@@ -377,7 +377,7 @@ class AlbumView extends StatelessWidget {
                           onEnqueue(song);
                         },
                         onPlay: (song) {
-                          onPlay(song.id, album);
+                          onPlay(song, album.songs);
                         },
                       );
                     },
