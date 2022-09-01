@@ -46,9 +46,9 @@ class GetTopSongs extends BaseRequest<List<SongResult>> {
       throw Exception(data);
     }
 
-    final List<dynamic>? songList = data['topSongs']['song'] as List<dynamic>;
+    final List<dynamic>? songList = (data['topSongs']['song'] ?? []) as List<dynamic>;
     final songs =
-        List<Map<String, dynamic>>.from(songList ?? []).map((songData) {
+        List<Map<String, dynamic>>.from(songList!).map((songData) {
       return SongResult.fromJson(songData, ctx);
     }).toList();
 
