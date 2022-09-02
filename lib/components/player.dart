@@ -1,6 +1,3 @@
-import 'dart:async';
-import 'dart:developer';
-
 import 'package:async_redux/async_redux.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
@@ -423,7 +420,6 @@ class PlayerView extends StatelessWidget {
                       SizedBox(height: 12.0),
                     ],
                   ),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -437,6 +433,26 @@ class PlayerView extends StatelessWidget {
                         icon: Icon(Icons.skip_next),
                         iconSize: 42.0,
                         onPressed: playerManager.next,
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ValueListenableBuilder<bool>(
+                        valueListenable:
+                            playerManager.isShuffleModeEnabledNotifier,
+                        builder: (context, isEnabled, child) {
+                          return IconButton(
+                            onPressed: playerManager.shuffle,
+                            icon: (isEnabled)
+                                ? Icon(Icons.shuffle)
+                                : Icon(
+                                    Icons.shuffle,
+                                    color: Colors.cyan,
+                                  ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -511,6 +527,7 @@ class PlayerScreen extends StatelessWidget {
 
 class AudioProgressBar extends StatelessWidget {
   const AudioProgressBar({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     final playerManager = getIt<PlayerManager>();

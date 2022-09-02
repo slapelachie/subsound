@@ -179,6 +179,7 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   UriAudioSource _createAudioSource(MediaItem mediaItem) {
     return AudioSource.uri(
       Uri.parse(mediaItem.id),
+      tag: mediaItem,
     );
   }
 
