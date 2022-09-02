@@ -13,6 +13,8 @@ import 'package:subsound/app/app.dart';
 import 'package:subsound/state/appstate.dart';
 import 'package:subsound/state/database/database.dart';
 import 'package:subsound/state/player_task.dart';
+import 'package:subsound/state/playerstate.dart';
+import 'package:subsound/state/service_locator.dart';
 import 'package:subsound/storage/cache.dart';
 
 final Logger logger = Logger("AppLogger");
@@ -43,24 +45,7 @@ void runMain(List<String> args) async {
     MultiWindow.init(args);
   }
 
-  // store this in a singleton
-  final h = await AudioService.init(
-    builder: () => MyAudioHandler(),
-    cacheManager: ArtworkCacheManager(),
-    config: AudioServiceConfig(
-      androidNotificationChannelName: 'SubSound',
-      androidResumeOnClick: true,
-      // Enable this if you want the Android service to exit the foreground state on pause.
-      androidStopForegroundOnPause: false,
-      androidNotificationClickStartsActivity: true,
-      androidShowNotificationBadge: false,
-      // androidNotificationIcon: 'mipmap/ic_launcher',
-      //params: DownloadAudioTask.createStartParams(),
-    ),
-  );
-
-  // save handler as singleton
-  audioHandler = h;
+  await setupServiceLocator();
   final DB db = await openDB();
 
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
@@ -85,7 +70,7 @@ void runMain(List<String> args) async {
 */
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final Store<AppState> store;
 
   const MyApp({
@@ -93,11 +78,28 @@ class MyApp extends StatelessWidget {
     required this.store,
   }) : super(key: key);
 
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    getIt<PlayerManager>().init();
+  }
+
+  @override
+  void dispose() {
+    getIt<PlayerManager>().dispose();
+    super.dispose();
+  }
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return StoreProvider(
-      store: store,
+      store: widget.store,
       child: MainApp(),
     );
   }

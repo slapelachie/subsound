@@ -9,21 +9,25 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:subsound/state/appstate.dart';
 import 'package:subsound/storage/cache.dart';
 
-MyAudioHandler? _audioHandler;
-
-MyAudioHandler get audioHandler {
-  return _audioHandler!;
-}
-
-set audioHandler(MyAudioHandler h) {
-  if (_audioHandler != null) {
-    throw ArgumentError.value(
-        'audioHandler was already set. make sure you only do this once.');
-  }
-  _audioHandler = h;
+Future<AudioHandler> initAudioService() async {
+  return await AudioService.init(
+    builder: () => MyAudioHandler(),
+    cacheManager: ArtworkCacheManager(),
+    config: AudioServiceConfig(
+      androidNotificationChannelName: 'SubSound',
+      androidResumeOnClick: true,
+      // Enable this if you want the Android service to exit the foreground state on pause.
+      androidStopForegroundOnPause: false,
+      androidNotificationClickStartsActivity: true,
+      androidShowNotificationBadge: false,
+      // androidNotificationIcon: 'mipmap/ic_launcher',
+      //params: DownloadAudioTask.createStartParams(),
+    ),
+  );
 }
 
 class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
+  final _playlist = ConcatenatingAudioSource(children: []);
   final _player = AudioPlayer();
 
   final BehaviorSubject<double> volumeState = BehaviorSubject.seeded(1.0);
@@ -35,10 +39,23 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     //     mediaItem.add(queue.value![index]);
     //   }
     // });
+    _loadEmptyPlaylist();
+    _notifyAudioHandlerAboutPlaybackEvents();
+    _listenForDurationChanges();
+    _listenForCurrentSongIndexChanges();
+    _listenForSequenceStateChanges();
+  }
 
-    // Broadcast the current playback state and what controls should currently
-    // be visible in the media notification
-    _player.playbackEventStream.listen((event) {
+  Future<void> _loadEmptyPlaylist() async {
+    try {
+      await _player.setAudioSource(_playlist);
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  void _notifyAudioHandlerAboutPlaybackEvents() {
+    _player.playbackEventStream.listen((PlaybackEvent event) {
       playbackState.add(playbackState.value.copyWith(
         controls: [
           MediaControl.skipToPrevious,
@@ -58,13 +75,16 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
           ProcessingState.ready: AudioProcessingState.ready,
           ProcessingState.completed: AudioProcessingState.completed,
         }[_player.processingState]!,
+        shuffleMode: (_player.shuffleModeEnabled)
+            ? AudioServiceShuffleMode.all
+            : AudioServiceShuffleMode.none,
         playing: _player.playing,
         updatePosition: _player.position,
         bufferedPosition: _player.bufferedPosition,
         speed: _player.speed,
+        queueIndex: event.currentIndex,
       ));
     }, onError: _handleErrors, onDone: _handleDone);
-
 
     volumeState.add(_player.volume);
     _player.volumeStream.listen((event) {
@@ -77,6 +97,99 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         skipToNext();
       }
     }, onError: _handleErrors);
+  }
+
+  void _listenForDurationChanges() {
+    _player.durationStream.listen((duration) {
+      var index = _player.currentIndex;
+      final newQueue = queue.value;
+      if (index == null || newQueue.isEmpty) return;
+      if (_player.shuffleModeEnabled) {
+        index = _player.shuffleIndices![index];
+      }
+      final oldMediaItem = newQueue[index];
+      final newMediaItem = oldMediaItem.copyWith(duration: duration);
+      newQueue[index] = newMediaItem;
+      queue.add(newQueue);
+      mediaItem.add(newMediaItem);
+    });
+  }
+
+  void _listenForCurrentSongIndexChanges() {
+    _player.currentIndexStream.listen((index) {
+      final playlist = queue.value;
+      if (index == null || playlist.isEmpty) return;
+      if (_player.shuffleModeEnabled) {
+        index = _player.shuffleIndices![index];
+      }
+      mediaItem.add(playlist[index]);
+    });
+  }
+
+  void _listenForSequenceStateChanges() {
+    _player.sequenceStateStream.listen((SequenceState? sequenceState) {
+      final sequence = sequenceState?.effectiveSequence;
+      if (sequence == null || sequence.isEmpty) return;
+      final items = sequence.map((source) => source.tag as MediaItem);
+      queue.add(items.toList());
+    });
+  }
+
+  @override
+  Future<void> updateQueue(List<MediaItem> mediaItems) async {
+    final audioSource = mediaItems.map(_createAudioSource);
+    _playlist.clear();
+    _playlist.addAll(audioSource.toList());
+
+    final newQueue = queue.value..clear();
+    newQueue..addAll(mediaItems);
+    queue.add(newQueue);
+    try {
+      print("wait...");
+      await _player.setAudioSource(_playlist);
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+
+  @override
+  Future<void> addQueueItems(List<MediaItem> mediaItems) async {
+    // manage Just Audio
+    final audioSource = mediaItems.map(_createAudioSource);
+    _playlist.addAll(audioSource.toList());
+
+    // notify system
+    final newQueue = queue.value..addAll(mediaItems);
+    queue.add(newQueue);
+  }
+
+  @override
+  Future<void> addQueueItem(MediaItem mediaItem) async {
+    // manage Just Audio
+    final audioSource = _createAudioSource(mediaItem);
+    _playlist.add(audioSource);
+
+    // notify system
+    final newQueue = queue.value..add(mediaItem);
+    queue.add(newQueue);
+    _player.setAudioSource(_playlist);
+  }
+
+  UriAudioSource _createAudioSource(MediaItem mediaItem) {
+    return AudioSource.uri(
+      Uri.parse(mediaItem.id),
+    );
+  }
+
+  @override
+  Future<void> removeQueueItemAt(int index) async {
+    // manage Just Audio
+    _playlist.removeAt(index);
+
+    // notify system
+    final newQueue = queue.value..removeAt(index);
+    queue.add(newQueue);
   }
 
   void _handleDone() {
@@ -102,77 +215,18 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   }
 
   @override
-  Future<void> skipToNext() async {
-    await _skip(1);
-  }
+  Future<void> skipToNext() => _player.seekToNext();
 
   @override
-  Future<void> skipToPrevious() async {
-    await _skip(-1);
-  }
-
-  bool get hasNext {
-    final queue = this.queue.value;
-    final index = playbackState.value.queueIndex!;
-    return queue.length > index + 1;
-  }
-
-  Future<void> _skip(int offset) async {
-    final queue = this.queue.value;
-    final index = playbackState.value.queueIndex!;
-    if (index >= queue.length) {
-      return;
-    }
-    if (index + offset < 0) {
-      await skipToQueueItem(0);
-      await seek(Duration.zero);
-      return;
-    }
-    if (index + offset >= queue.length) {
-      await pause();
-      await skipToQueueItem(0);
-      return;
-    }
-    final isPastStart = _player.position > Duration(milliseconds: 3500);
-    if (offset == -1 && isPastStart) {
-      await seek(Duration.zero);
-      return;
-    }
-    await skipToQueueItem(index + offset);
-  }
+  Future<void> skipToPrevious() => _player.seekToPrevious();
 
   @override
   Future<void> skipToQueueItem(int index) async {
-    final q = queue.value;
-    if (index < 0 || index >= q.length) return;
-    await super.skipToQueueItem(index);
-    var item = q[index];
-    var wasPlaying = _player.playing;
-    if (wasPlaying) {
-      await _player.pause();
+    if (index < 0 || index >= queue.value.length) return;
+    if (_player.shuffleModeEnabled) {
+      index = _player.shuffleIndices![index];
     }
-    playbackState.add(playbackState.value.copyWith(
-      processingState: AudioProcessingState.loading,
-      queueIndex: index,
-      updatePosition: Duration.zero,
-    ));
-    mediaItem.add(queue.value[index]);
-
-    try {
-      final source = await _toStreamSource(item);
-      await _player.setAudioSource(source);
-      if (wasPlaying) {
-        unawaited(_player.play());
-      }
-    } on PlayerInterruptedException catch (_) {
-      // ignore interrupts to load()
-    } on Exception catch (e, st) {
-      unawaited(Sentry.captureException(
-        e,
-        stackTrace: st,
-        hint: "error changing audiosource to item=${item.id}",
-      ));
-    }
+    _player.seek(Duration.zero, index: index);
   }
 
   Future<void> setVolume(double volume) async {
@@ -192,6 +246,19 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       case 'saveBookmark':
         // app-specific code
         break;
+      case 'dispose':
+        await _player.dispose();
+        super.stop();
+    }
+  }
+
+  @override
+  Future<void> setShuffleMode(AudioServiceShuffleMode shuffleMode) async {
+    if (shuffleMode == AudioServiceShuffleMode.none) {
+      _player.setShuffleModeEnabled(false);
+    } else {
+      await _player.shuffle();
+      _player.setShuffleModeEnabled(true);
     }
   }
 

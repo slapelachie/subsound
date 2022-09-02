@@ -8,7 +8,6 @@ import 'package:subsound/components/player.dart';
 import 'package:subsound/state/appcommands.dart';
 import 'package:subsound/state/database/database.dart';
 import 'package:subsound/state/networkstate.dart';
-import 'package:subsound/state/playerstate.dart';
 import 'package:subsound/subsonic/context.dart';
 import 'package:subsound/subsonic/models/album.dart';
 import 'package:subsound/subsonic/requests/get_album.dart';
@@ -20,9 +19,6 @@ import 'package:subsound/subsonic/requests/get_starred2.dart';
 import 'package:subsound/subsonic/requests/requests.dart';
 import 'package:subsound/utils/utils.dart';
 import 'package:uuid/uuid.dart';
-
-import '../subsonic/models/song.dart';
-import '../subsonic/requests/get_top_songs.dart';
 
 final uuid = Uuid();
 
@@ -98,7 +94,6 @@ class StartupAction extends ReduxAction<AppState> {
     await store.dispatch(SetupCheckInternetCommand());
     await store.dispatch(CheckInternetCommand());
     store.dispatch(RefreshAppState());
-    await store.dispatch(StartupPlayer());
     await Future.delayed(Duration(seconds: 1));
     // run a batch of scrobbles in the background on startup:
     dispatch(RunScrobbleBatchAction());

@@ -11,6 +11,7 @@ import 'package:subsound/utils/duration.dart';
 import 'package:subsound/views/summary_view.dart';
 
 import '../../state/playerstate.dart';
+import '../../state/service_locator.dart';
 import '../../views/album_scroll_view.dart';
 
 class ArtistScreen extends StatelessWidget {
@@ -84,6 +85,7 @@ class ArtistPageModelFactory extends VmFactory<AppState, ArtistPage> {
 
   @override
   ArtistPageModel fromStore() {
+    final playerManager = getIt<PlayerManager>();
     return ArtistPageModel(
         currentSongId: state.playerState.currentSong?.id,
         onLoad: (artistId) =>
@@ -92,12 +94,9 @@ class ArtistPageModelFactory extends VmFactory<AppState, ArtistPage> {
         onLoadTopSongs: (artistName) =>
             dispatchAsync(GetTopSongsCommand(artist: artistName, count: 5)).then(
                 (value) => currentState().dataState.topSongs.get(artistName)),
-        onEnqueue: (SongResult song) {
-          dispatch(PlayerCommandEnqueueSong(song));
-        },
+        onEnqueue: playerManager.enqueueSong,
         onPlay: (SongResult song, List<SongResult> topSongs) {
-          dispatch(
-              PlayerCommandPlaySongInQueue(song: song, songQueue: topSongs));
+          playerManager.playSongWithQueue(song, topSongs);
         });
   }
 }

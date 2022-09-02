@@ -3,9 +3,9 @@ import 'dart:developer';
 
 import 'package:async_redux/async_redux.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:subsound/components/covert_art.dart';
 import 'package:subsound/screens/login/album_page.dart';
 import 'package:subsound/screens/login/artist_page.dart';
@@ -18,7 +18,8 @@ import 'package:subsound/state/queue.dart';
 import 'package:subsound/storage/cache.dart';
 import 'package:subsound/subsonic/requests/get_album.dart';
 import 'package:subsound/subsonic/requests/star.dart';
-import 'package:subsound/utils/duration.dart';
+
+import '../state/service_locator.dart';
 
 class PlayerSong {
   final String id;
@@ -281,15 +282,6 @@ class _PlayerViewModelFactory extends VmFactory<AppState, PlayerView> {
       playerState: state.playerState.current,
       onStar: (String id) => dispatch(StarIdCommand(SongId(songId: id))),
       onUnstar: (String id) => dispatch(UnstarIdCommand(SongId(songId: id))),
-      onPlay: () => dispatch(PlayerCommandPlay()),
-      onPause: () => dispatch(PlayerCommandPause()),
-      onPlayNext: () => dispatch(PlayerCommandSkipNext()),
-      onPlayPrev: () => dispatch(PlayerCommandSkipPrev()),
-      onStartListen: (listener) =>
-          dispatch(PlayerStartListenPlayerPosition(listener)),
-      onStopListen: (listener) =>
-          dispatch(PlayerStopListenPlayerPosition(listener)),
-      onSeek: (val) => dispatch(PlayerCommandSeekTo(val)),
     );
   }
 }
@@ -309,13 +301,6 @@ class PlayerViewModel extends Vm {
   final PlayerStates playerState;
   final Function(String) onStar;
   final Function(String) onUnstar;
-  final Function onPlay;
-  final Function onPause;
-  final Function onPlayNext;
-  final Function onPlayPrev;
-  final Function(PositionListener) onStartListen;
-  final Function(PositionListener) onStopListen;
-  final Function(int) onSeek;
 
   PlayerViewModel({
     required this.songId,
@@ -332,13 +317,6 @@ class PlayerViewModel extends Vm {
     required this.playerState,
     required this.onStar,
     required this.onUnstar,
-    required this.onPlay,
-    required this.onPause,
-    required this.onPlayNext,
-    required this.onPlayPrev,
-    required this.onStartListen,
-    required this.onStopListen,
-    required this.onSeek,
   }) : super(equals: [
           songId,
           songTitle,
@@ -368,6 +346,7 @@ class PlayerView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final playerManager = getIt<PlayerManager>();
     return Container(
       color: backgroundColor,
       height: height,
@@ -444,29 +423,20 @@ class PlayerView extends StatelessWidget {
                       SizedBox(height: 12.0),
                     ],
                   ),
-                  UpdatingPlayerSlider(
-                    onSeek: vm.onSeek,
-                    size: MediaQuery.of(context).size.width * 0.8,
-                    onStartListen: vm.onStartListen,
-                    onStopListen: vm.onStopListen,
-                  ),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       IconButton(
                         icon: Icon(Icons.skip_previous),
                         iconSize: 42.0,
-                        onPressed: () {
-                          vm.onPlayPrev();
-                        },
+                        onPressed: playerManager.previous,
                       ),
-                      PlayButton(state: vm, size: 72.0),
+                      PlayButton(size: 72.0),
                       IconButton(
                         icon: Icon(Icons.skip_next),
                         iconSize: 42.0,
-                        onPressed: () {
-                          vm.onPlayNext();
-                        },
+                        onPressed: playerManager.next,
                       ),
                     ],
                   ),
@@ -539,327 +509,61 @@ class PlayerScreen extends StatelessWidget {
   }
 }
 
-class UpdatingPlayerSlider extends StatefulWidget {
-  final double size;
-  final Function(PositionListener) onStartListen;
-  final Function(PositionListener) onStopListen;
-  final Function(int) onSeek;
-
-  UpdatingPlayerSlider({
-    Key? key,
-    required this.size,
-    required this.onSeek,
-    required this.onStartListen,
-    required this.onStopListen,
-  }) : super(key: key);
-
-  @override
-  State<UpdatingPlayerSlider> createState() {
-    return UpdatingPlayerSliderState();
-  }
-}
-
-class UpdatingPlayerSliderState extends State<UpdatingPlayerSlider>
-    implements PositionListener {
-  late StreamController<PositionUpdate> stream;
-
-  @override
-  void next(PositionUpdate pos) {
-    stream.add(pos);
-  }
-
-  @override
-  void reassemble() {
-    super.reassemble();
-    widget.onStopListen(this);
-  }
-
+class AudioProgressBar extends StatelessWidget {
+  const AudioProgressBar({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<PositionUpdate>(
-      stream: stream.stream,
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return PlayerSlider(
-            onSeek: widget.onSeek,
-            pos: snapshot.data!,
-            size: widget.size,
-          );
-        } else {
-          return PlayerSlider(
-            onSeek: widget.onSeek,
-            pos: PositionUpdate(
-              position: Duration.zero,
-              duration: Duration(milliseconds: 1),
-            ),
-            size: widget.size,
-          );
-        }
+    final playerManager = getIt<PlayerManager>();
+    return ValueListenableBuilder<ProgressBarState>(
+      valueListenable: playerManager.progressNotifier,
+      builder: (_, value, __) {
+        return ProgressBar(
+          progress: value.current,
+          buffered: value.buffered,
+          total: value.total,
+          onSeek: playerManager.seek,
+        );
       },
-    );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    stream = StreamController<PositionUpdate>(
-      onListen: () {},
-      onCancel: () {
-        log('UpdatingPlayerSliderState: onCancel');
-        widget.onStopListen(this);
-      },
-    );
-    log('UpdatingPlayerSliderState: onInitListen');
-    widget.onStartListen(this);
-  }
-
-  @override
-  void dispose() {
-    log('UpdatingPlayerSliderState: onFinishListen');
-    widget.onStopListen(this);
-    stream.close();
-    super.dispose();
-  }
-}
-
-class PlayerSlider extends StatelessWidget {
-  final Function(int) onSeek;
-  final PositionUpdate pos;
-  final double size;
-
-  PlayerSlider({
-    Key? key,
-    required this.onSeek,
-    required this.pos,
-    required this.size,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final total = _getDuration(pos);
-    final position = _getPosition(pos);
-
-    return ProgressBar(
-      onChanged: onSeek,
-      position: position,
-      total: total,
-      size: size,
-    );
-  }
-
-  static Duration _getDuration(PositionUpdate nextPos) {
-    if (nextPos.duration.inMilliseconds == 0) {
-      // avoid division by zero
-      return Duration(seconds: 1);
-    }
-    return nextPos.duration;
-  }
-
-  static Duration _getPosition(PositionUpdate nextPos) {
-    if (nextPos.position == Duration.zero) {
-      return Duration(seconds: 0);
-    }
-    if (nextPos.position > nextPos.duration) {
-      return nextPos.duration;
-    } else {
-      return nextPos.position;
-    }
-  }
-}
-
-class CachedSliderState extends State<CachedSlider> {
-  double? valueOverride;
-  String? labelOverride;
-
-  @override
-  Widget build(BuildContext context) {
-    return SliderTheme(
-      data: SliderThemeData(
-        trackHeight: 2.0,
-        trackShape: CustomTrackShape(),
-        thumbShape: RoundSliderThumbShape(
-          enabledThumbRadius: 5.0,
-          pressedElevation: 4.0,
-          elevation: 2.0,
-        ),
-        overlayShape: RoundSliderOverlayShape(overlayRadius: 8.0),
-        overlayColor: Theme.of(context).colorScheme.secondary.withOpacity(0.4),
-        thumbColor: Theme.of(context).colorScheme.primary,
-        activeTrackColor: Theme.of(context).colorScheme.primary,
-        inactiveTrackColor: Theme.of(context).brightness == Brightness.dark
-            ? Colors.white.withOpacity(0.4)
-            : Colors.black.withOpacity(0.2),
-      ),
-      child: Slider.adaptive(
-        label: labelOverride ?? widget.label,
-        min: 0.0,
-        max: widget.max.toDouble(),
-        value: valueOverride ?? widget.value.toDouble(),
-        divisions: widget.divisions,
-        onChangeEnd: (double newValue) {
-          final nextValue = newValue.round();
-          widget.onChanged(nextValue);
-          setState(() {
-            valueOverride = null;
-            labelOverride = null;
-          });
-        },
-        onChanged: (double newValue) {
-          final nextValue = newValue.round();
-          setState(() {
-            valueOverride = newValue;
-            labelOverride = formatDuration(Duration(seconds: nextValue));
-          });
-        },
-        semanticFormatterCallback: (double newValue) {
-          return formatDuration(Duration(seconds: newValue.round()));
-        },
-      ),
-    );
-  }
-}
-
-class CustomTrackShape extends RoundedRectSliderTrackShape {
-  @override
-  Rect getPreferredRect({
-    required RenderBox parentBox,
-    Offset offset = Offset.zero,
-    required SliderThemeData sliderTheme,
-    bool isEnabled = false,
-    bool isDiscrete = false,
-  }) {
-    final double trackHeight = sliderTheme.trackHeight ?? 0;
-    final double trackLeft = offset.dx;
-    final double trackTop =
-        offset.dy + (parentBox.size.height - trackHeight) / 2;
-    final double trackWidth = parentBox.size.width;
-    return Rect.fromLTWH(trackLeft, trackTop, trackWidth, trackHeight);
-  }
-}
-
-class CachedSlider extends StatefulWidget {
-  final String label;
-  final int value;
-  final int max;
-  final int divisions;
-  final double width;
-  final Function(int) onChanged;
-
-  const CachedSlider({
-    Key? key,
-    required this.label,
-    required this.value,
-    required this.max,
-    required this.divisions,
-    required this.width,
-    required this.onChanged,
-  }) : super(key: key);
-
-  @override
-  State<CachedSlider> createState() {
-    return CachedSliderState();
-  }
-}
-
-class ProgressBar extends StatelessWidget {
-  final Duration total;
-  final Duration position;
-  final double size;
-  final Function(int) onChanged;
-
-  ProgressBar({
-    Key? key,
-    required this.onChanged,
-    required this.total,
-    required this.position,
-    required this.size,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    var positionText = formatDuration(position);
-    var remaining =
-        Duration(microseconds: total.inMicroseconds - position.inMicroseconds);
-    var remainingText = "-" + formatDuration(remaining);
-
-    final divisions = total.inSeconds < 1 ? 1 : total.inSeconds;
-    final value = position.inSeconds;
-
-    return SizedBox(
-      width: size,
-      child: Column(
-        children: [
-          CachedSlider(
-            label: positionText,
-            value: value,
-            max: total.inSeconds,
-            divisions: divisions,
-            width: size,
-            onChanged: onChanged,
-          ),
-          SizedBox(height: 10.0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(positionText, style: TextStyle(fontSize: 16.0)),
-              Text(remainingText, style: TextStyle(fontSize: 16.0)),
-            ],
-          )
-        ],
-      ),
     );
   }
 }
 
 class PlayButton extends StatelessWidget {
-  final PlayerViewModel state;
   final double size;
 
   const PlayButton({
     Key? key,
-    required this.state,
-    required this.size,
+    this.size = 32.0,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: () {
-        switch (state.playerState) {
-          case PlayerStates.stopped:
-            state.onPlay();
-            break;
-          case PlayerStates.playing:
-            state.onPause();
-            break;
-          case PlayerStates.paused:
-            state.onPlay();
-            break;
-          case PlayerStates.buffering:
-            state.onPause();
-            break;
+    final playerManager = getIt<PlayerManager>();
+    return ValueListenableBuilder<PlayButtonState>(
+      valueListenable: playerManager.playButtonNotifier,
+      builder: (_, value, __) {
+        switch (value) {
+          case PlayButtonState.loading:
+            return Container(
+              margin: EdgeInsets.all(8.0),
+              width: size,
+              height: size,
+              child: CircularProgressIndicator(),
+            );
+          case PlayButtonState.paused:
+            return IconButton(
+              icon: Icon(Icons.play_arrow),
+              iconSize: size,
+              onPressed: playerManager.play,
+            );
+          case PlayButtonState.playing:
+            return IconButton(
+              icon: Icon(Icons.pause),
+              iconSize: size,
+              onPressed: playerManager.pause,
+            );
         }
       },
-      splashRadius: 40.0,
-      iconSize: size,
-      hoverColor: Colors.tealAccent,
-      icon: _getIcon(state.playerState),
     );
-  }
-
-  Icon _getIcon(PlayerStates current) {
-    if (current == PlayerStates.playing) {
-      return Icon(Icons.pause, size: size);
-    }
-    if (current == PlayerStates.paused) {
-      return Icon(Icons.play_arrow, size: size);
-    }
-    if (current == PlayerStates.stopped) {
-      return Icon(Icons.play_arrow, size: size);
-    }
-    if (current == PlayerStates.buffering) {
-      return Icon(Icons.pause, size: size);
-    }
-    return Icon(Icons.play_arrow, size: size);
   }
 }

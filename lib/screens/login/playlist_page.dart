@@ -10,6 +10,8 @@ import 'package:subsound/state/playerstate.dart';
 import 'package:subsound/subsonic/requests/get_album.dart';
 import 'package:subsound/subsonic/requests/get_playlist.dart';
 
+import '../../state/service_locator.dart';
+
 class PlaylistViewModel extends Vm {
   final String currentSongId;
   final Function(SongResult, List<SongResult>) onPlay;
@@ -29,13 +31,11 @@ class _PlaylistViewModelFactory extends VmFactory<AppState, PlaylistScreen> {
 
   @override
   PlaylistViewModel fromStore() {
+    final playerManager = getIt<PlayerManager>();
     return PlaylistViewModel(
       currentSongId: state.playerState.currentSong?.id ?? '',
-      onEnqueue: (song) => dispatch(PlayerCommandEnqueueSong(song)),
-      onPlay: (song, songs) => dispatch(PlayerCommandContextualPlay(
-        songId: song.id,
-        playQueue: songs,
-      )),
+      onEnqueue: playerManager.enqueueSong,
+      onPlay: playerManager.playSongWithQueue,
       onLoadPlaylist: (playlistId) =>
           dispatchAsync(GetPlaylistCommand(playlistId)).then((value) =>
               currentState().dataState.playlists.playlistCache[playlistId]!),

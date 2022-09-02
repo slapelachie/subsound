@@ -10,11 +10,14 @@ import 'package:subsound/subsonic/context.dart';
 import 'package:subsound/subsonic/requests/get_album.dart';
 import 'package:subsound/theme/text_styles.dart';
 
+import '../../state/service_locator.dart';
+
 class _AlbumViewModelFactory extends VmFactory<AppState, AlbumScreen> {
   _AlbumViewModelFactory(AlbumScreen widget) : super(widget);
 
   @override
   AlbumViewModel fromStore() {
+    final playerManager = getIt<PlayerManager>();
     return AlbumViewModel(
       serverData: state.loginState,
       currentSongId: state.playerState.currentSong?.id,
@@ -23,11 +26,9 @@ class _AlbumViewModelFactory extends VmFactory<AppState, AlbumScreen> {
             .then((value) => currentState().dataState.albums.get(albumId));
       },
       onPlay: (SongResult song, List<SongResult> albumSongs) {
-        dispatch(PlayerCommandPlaySongInQueue(song: song, songQueue: albumSongs));
+        playerManager.playSongWithQueue(song, albumSongs);
       },
-      onEnqueue: (SongResult song) {
-        dispatch(PlayerCommandEnqueueSong(song));
-      },
+      onEnqueue: playerManager.enqueueSong,
     );
   }
 }
@@ -171,6 +172,7 @@ class SongRow extends StatelessWidget {
         direction: Axis.horizontal,
         child: ListTile(
           onTap: () {
+            print("TAP!!!!!!");
             onPlay(song);
             Slidable.of(context)?.close();
           },
@@ -242,6 +244,7 @@ class AlbumView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var expandedHeight = MediaQuery.of(context).size.width * .9;
+    final playerManager = getIt<PlayerManager>();
 
     Widget makeDismissible({required Widget child}) => GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -377,7 +380,8 @@ class AlbumView extends StatelessWidget {
                           onEnqueue(song);
                         },
                         onPlay: (song) {
-                          onPlay(song, album.songs);
+                          print("PLAY ALBUM THSJK");
+                          playerManager.playSongWithQueue(song, album.songs);
                         },
                       );
                     },

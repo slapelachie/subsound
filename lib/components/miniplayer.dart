@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:async_redux/async_redux.dart';
+import 'package:audio_service/audio_service.dart';
+import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:subsound/components/covert_art.dart';
 import 'package:subsound/components/player.dart';
@@ -9,6 +11,8 @@ import 'package:subsound/state/appcommands.dart';
 import 'package:subsound/state/appstate.dart';
 import 'package:subsound/state/playerstate.dart';
 import 'package:subsound/subsonic/requests/star.dart';
+
+import '../state/service_locator.dart';
 
 class PlayerBottomBar extends StatelessWidget {
   final double height;
@@ -56,14 +60,6 @@ class MiniPlayerModel extends Vm {
   final double playbackProgress;
   final double volume;
   final PlayerStates playerState;
-  final Function onPlay;
-  final Function onPause;
-  final Function onPlayNext;
-  final Function onPlayPrev;
-  final Function(PositionListener) onStartListen;
-  final Function(PositionListener) onStopListen;
-  final Function(int) onSeek;
-  final Function(double) onVolumeChanged;
   final Function(String) onStar;
   final Function(String) onUnstar;
   final bool isStarred;
@@ -80,14 +76,6 @@ class MiniPlayerModel extends Vm {
     required this.playbackProgress,
     required this.volume,
     required this.playerState,
-    required this.onPlay,
-    required this.onPause,
-    required this.onPlayNext,
-    required this.onPlayPrev,
-    required this.onStartListen,
-    required this.onStopListen,
-    required this.onSeek,
-    required this.onVolumeChanged,
     required this.onStar,
     required this.onUnstar,
     required this.isStarred,
@@ -124,16 +112,6 @@ class MiniPlayerModel extends Vm {
       playbackProgress: playbackProgress,
       volume: state.playerState.volume,
       playerState: state.playerState.current,
-      onPlay: () => dispatch(PlayerCommandPlay()),
-      onPause: () => dispatch(PlayerCommandPause()),
-      onPlayNext: () => dispatch(PlayerCommandSkipNext()),
-      onPlayPrev: () => dispatch(PlayerCommandSkipPrev()),
-      onStartListen: (listener) =>
-          dispatch(PlayerStartListenPlayerPosition(listener)),
-      onStopListen: (listener) =>
-          dispatch(PlayerStopListenPlayerPosition(listener)),
-      onSeek: (seekToPosition) => dispatch(PlayerCommandSeekTo(seekToPosition)),
-      onVolumeChanged: (next) => dispatch(PlayerCommandSetVolume(next)),
       onStar: (next) => dispatch(StarIdCommand(SongId(songId: next))),
       onUnstar: (next) => dispatch(UnstarIdCommand(SongId(songId: next))),
       isStarred: currentSong?.isStarred ?? false,
@@ -141,109 +119,25 @@ class MiniPlayerModel extends Vm {
   }
 }
 
-class MiniPlayerProgressBar extends StatefulWidget {
-  final double height;
-  final Function(PositionListener) onInitListen;
-  final Function(PositionListener) onFinishListen;
 
-  MiniPlayerProgressBar({
-    Key? key,
-    required this.height,
-    required this.onInitListen,
-    required this.onFinishListen,
-  }) : super(key: key);
-
-  @override
-  State<MiniPlayerProgressBar> createState() {
-    return MiniPlayerProgressBarState();
-  }
-}
-
-class MiniPlayerProgressBarState extends State<MiniPlayerProgressBar>
-    implements PositionListener {
-  late StreamController<PositionUpdate> stream;
-
-  @override
-  void next(PositionUpdate pos) {
-    stream.add(pos);
-  }
-
-  @override
-  void reassemble() {
-    super.reassemble();
-    widget.onFinishListen(this);
-  }
-
+class MiniAudioProgressBar extends StatelessWidget {
+  const MiniAudioProgressBar({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    return StreamBuilder<PositionUpdate>(
-      stream: stream.stream,
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          final next = snapshot.data;
-          final pos = next?.position.inMilliseconds ?? 0;
-          final durSafe = next?.duration.inMilliseconds ?? 1;
-          final dur = durSafe == 0 ? 1 : durSafe;
-          final playbackProgress = pos / dur;
-
-          return Stack(
-            children: [
-              Container(
-                padding: EdgeInsets.all(0),
-                height: widget.height,
-                color: Colors.white38,
-              ),
-              Container(
-                color: Colors.white,
-                height: widget.height,
-                width: screenWidth * playbackProgress,
-              ),
-            ],
-          );
-        } else {
-          return Stack(
-            children: [
-              Container(
-                padding: EdgeInsets.all(0),
-                height: widget.height,
-                color: Colors.white38,
-              ),
-              Container(
-                color: Colors.white,
-                height: widget.height,
-                width: screenWidth * 0.0,
-              ),
-            ],
-          );
-        }
+    final playerManager = getIt<PlayerManager>();
+    return ValueListenableBuilder<ProgressBarState>(
+      valueListenable: playerManager.progressNotifier,
+      builder: (_, value, __) {
+        return ProgressBar(
+          progress: value.current,
+          buffered: value.buffered,
+          total: value.total,
+          thumbRadius: 0.0,
+        );
       },
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    stream = StreamController<PositionUpdate>(
-      onListen: () {},
-      onCancel: () {
-        widget.onFinishListen(this);
-      },
-    );
-    log('onInitListen');
-    widget.onInitListen(this);
-  }
-
-  @override
-  void dispose() {
-    log('onFinishListen');
-    stream.close();
-    widget.onFinishListen(this);
-    super.dispose();
   }
 }
-
 
 class MiniPlayer extends StatelessWidget {
   final double height;
@@ -263,21 +157,18 @@ class MiniPlayer extends StatelessWidget {
   Widget build(BuildContext context) {
     //final screenWidth = MediaQuery.of(context).size.width;
     final playerHeight = height - _miniProgressBarHeight;
+    final playerManager = getIt<PlayerManager>();
 
     return StoreConnector<AppState, MiniPlayerModel>(
       vm: () => _MiniPlayerModelFactory(this),
       builder: (context, state) => AnimatedContainer(
-        height: state.playerState == PlayerStates.stopped ? 0 : 50.0,
+        height: playerManager.getPlaybackState() == MediaAction.stop? 0 : 50.0,
         duration: Duration(milliseconds: 100),
         child: Container(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              MiniPlayerProgressBar(
-                height: _miniProgressBarHeight,
-                onInitListen: state.onStartListen,
-                onFinishListen: state.onStopListen,
-              ),
+              MiniAudioProgressBar(),
               SizedBox(
                 height: playerHeight,
                 child: InkWell(
@@ -320,7 +211,7 @@ class MiniPlayer extends StatelessWidget {
                         ),
                         Container(
                           padding: EdgeInsets.only(right: 5.0),
-                          child: PlayPauseIcon(state: state),
+                          child: PlayButton(),
                         ),
                       ],
                     ),
@@ -332,55 +223,5 @@ class MiniPlayer extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class PlayPauseIcon extends StatelessWidget {
-  final MiniPlayerModel state;
-  final double? iconSize;
-
-  PlayPauseIcon({Key? key, required this.state, this.iconSize})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: state.hasCurrentSong
-          ? () {
-              switch (state.playerState) {
-                case PlayerStates.stopped:
-                  state.onPlay();
-                  break;
-                case PlayerStates.playing:
-                  state.onPause();
-                  break;
-                case PlayerStates.paused:
-                  state.onPlay();
-                  break;
-                case PlayerStates.buffering:
-                  state.onPause();
-                  break;
-              }
-            }
-          : null,
-      splashRadius: 16.0,
-      icon: getIcon(state.playerState),
-      iconSize: iconSize,
-    );
-  }
-
-  Widget getIcon(PlayerStates playerState) {
-    switch (playerState) {
-      case PlayerStates.stopped:
-        return Icon(Icons.play_circle_fill);
-      case PlayerStates.playing:
-        return Icon(Icons.pause);
-      case PlayerStates.paused:
-        return Icon(Icons.play_circle_fill);
-      case PlayerStates.buffering:
-        return Icon(Icons.refresh);
-      default:
-        return Icon(Icons.play_circle_fill);
-    }
   }
 }

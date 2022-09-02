@@ -10,17 +10,17 @@ import 'package:subsound/state/playerstate.dart';
 import 'package:subsound/subsonic/requests/get_album.dart';
 import 'package:subsound/subsonic/requests/get_artist.dart';
 
+import '../../state/service_locator.dart';
+
 class StarredPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final playerManager = getIt<PlayerManager>();
     return StoreConnector<AppState, StarredViewModel>(
       converter: (st) => StarredViewModel(
         currentSongId: st.state.playerState.currentSong?.id ?? '',
-        onPlayAlbum: (album) => st.dispatch(PlayerCommandPlayAlbum(album)),
-        onPlaySong: (song, queue) => st.dispatch(PlayerCommandContextualPlay(
-          songId: song.id,
-          playQueue: queue,
-        )),
+        onPlayAlbum: playerManager.playAlbum,
+        onPlaySong: playerManager.playSongWithQueue,
         onLoadStarred: (bool forceRefresh) => st
             .dispatchAsync(RefreshStarredCommand())
             .then((value) => st.state.dataState.stars),

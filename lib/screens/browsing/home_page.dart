@@ -16,19 +16,18 @@ import 'package:subsound/subsonic/requests/get_album_list.dart';
 import 'package:subsound/subsonic/requests/get_artist.dart';
 import 'package:subsound/subsonic/requests/get_playlist.dart';
 
+import '../../state/service_locator.dart';
 import '../../views/album_scroll_view.dart';
 
 class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final playerManager = getIt<PlayerManager>();
     return StoreConnector<AppState, _HomePageViewModel>(
       converter: (st) => _HomePageViewModel(
         currentSongId: st.state.playerState.currentSong?.id ?? '',
-        onPlayAlbum: (album) => st.dispatch(PlayerCommandPlayAlbum(album)),
-        onPlaySong: (song, queue) => st.dispatch(PlayerCommandContextualPlay(
-          songId: song.id,
-          playQueue: queue,
-        )),
+        onPlayAlbum: playerManager.playAlbum,
+        onPlaySong: playerManager.playSongWithQueue,
         onLoadStarred: () async {
           final load1 = st.dispatchAsync(RefreshStarredCommand());
           final load2 = st.dispatchAsync(

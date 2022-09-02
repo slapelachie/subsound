@@ -9,18 +9,13 @@ import 'package:subsound/state/database/database.dart';
 import 'package:subsound/state/database/scrobbles_db.dart';
 import 'package:subsound/state/errors.dart';
 import 'package:subsound/state/playerstate.dart';
+import 'package:subsound/state/service_locator.dart';
 import 'package:subsound/storage/cache.dart';
-import 'package:subsound/subsonic/models/song.dart';
 import 'package:subsound/subsonic/requests/get_album.dart';
-import 'package:subsound/subsonic/requests/get_album_list.dart';
-import 'package:subsound/subsonic/requests/get_album_list2.dart';
-import 'package:subsound/subsonic/requests/get_artist.dart';
-import 'package:subsound/subsonic/requests/get_artists.dart';
 import 'package:subsound/subsonic/requests/get_playlist.dart';
 import 'package:subsound/subsonic/requests/get_playlists.dart';
 import 'package:subsound/subsonic/requests/get_starred2.dart';
 import 'package:subsound/subsonic/requests/get_top_songs.dart';
-import 'package:subsound/subsonic/requests/ping.dart';
 import 'package:subsound/subsonic/requests/post_scrobble.dart';
 import 'package:subsound/subsonic/requests/requests.dart';
 import 'package:subsound/subsonic/requests/star.dart';
@@ -33,11 +28,12 @@ class StarIdCommand extends RunRequest {
 
   @override
   Future<AppState?> reduce() async {
+    final playerManager = getIt<PlayerManager>();
     final stateBefore = state.playerState.currentSong;
     if (stateBefore?.id == id.getId) {
       final starred = stateBefore?.copy(isStarred: true);
       if (starred != null) {
-        dispatch(PlayerCommandSetCurrentPlaying(starred));
+        await playerManager.playSong(starred);
       }
     }
     try {
@@ -63,13 +59,13 @@ class StarIdCommand extends RunRequest {
         );
       } else {
         if (stateBefore != null) {
-          await dispatch(PlayerCommandSetCurrentPlaying(stateBefore));
+          await playerManager.playSong(stateBefore);
         }
         await dispatch(DisplayError("something went wrong"));
       }
     } catch (e) {
       if (stateBefore != null) {
-        await dispatch(PlayerCommandSetCurrentPlaying(stateBefore));
+        await playerManager.playSong(stateBefore);
       }
       rethrow;
     }
@@ -84,11 +80,10 @@ class UnstarIdCommand extends RunRequest {
 
   @override
   Future<AppState?> reduce() async {
+    final playerManager = getIt<PlayerManager>();
     PlayerSong? currentSong = state.playerState.currentSong;
     if (currentSong != null) {
-      await dispatch(PlayerCommandSetCurrentPlaying(
-        currentSong.copy(isStarred: false),
-      ));
+      await playerManager.playSong(currentSong.copy(isStarred: false));
     }
     try {
       final res = await UnstarItem(id: id).run(state.loginState.toClient());
@@ -112,12 +107,12 @@ class UnstarIdCommand extends RunRequest {
       } else {
         await dispatch(DisplayError("something went wrong"));
         if (currentSong != null) {
-          await dispatch(PlayerCommandSetCurrentPlaying(currentSong));
+          await playerManager.playSong(currentSong);
         }
       }
     } catch (e) {
       if (currentSong != null) {
-        await dispatch(PlayerCommandSetCurrentPlaying(currentSong));
+        await playerManager.playSong(currentSong);
       }
       rethrow;
     }
@@ -300,8 +295,8 @@ class GetTopSongsCommand extends RunRequest {
     if (topSongsCached != null) {
       return null;
     }
-    final subsonicResponse =
-    await GetTopSongs(artist: artist, count: count).run(state.loginState.toClient());
+    final subsonicResponse = await GetTopSongs(artist: artist, count: count)
+        .run(state.loginState.toClient());
 
     List<SongResult> topSongsResult = subsonicResponse.data;
 

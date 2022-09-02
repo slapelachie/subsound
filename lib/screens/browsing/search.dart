@@ -10,6 +10,8 @@ import 'package:subsound/subsonic/requests/get_album.dart';
 import 'package:subsound/subsonic/requests/get_artist.dart';
 import 'package:subsound/subsonic/requests/search3.dart';
 
+import '../../state/service_locator.dart';
+
 class SearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -46,14 +48,11 @@ class _SearchModelFactory extends VmFactory<AppState, SearchField> {
 
   @override
   _SearchModel fromStore() {
+    final playerManager = getIt<PlayerManager>();
     return _SearchModel(
       currentPlayingId: state.playerState.currentSong?.id ?? '',
-      onPlaySong: (SongResult song, List<SongResult> playQueue) =>
-          dispatchAsync(PlayerCommandContextualPlay(
-        songId: song.id,
-        playQueue: playQueue,
-      )),
-      onPlayAlbum: (album) => dispatchAsync(PlayerCommandPlayAlbum(album)),
+      onPlaySong: playerManager.playSongWithQueue,
+      onPlayAlbum: playerManager.playAlbum,
       onSearch: (query) => dispatchAsync(SearchCommand(query))
           .then((value) => currentState().dataState.searches.get(query))
           .then((value) => value.data),
